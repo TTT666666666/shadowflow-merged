@@ -539,3 +539,39 @@ export function TimelineList({ messages }: { messages: TimelineMessage[] }) {
     </>
   );
 }
+
+/**
+ * 本地补全：上游仓库缺失 `userVisibleText` 导出（ProductApp.tsx / TurnRail.tsx 引用）。
+ * 按 craft-markers 协议（backend/node/src/lib/craft-markers.ts）：剥掉展示噪音——
+ * 行首 `[intake]`/`[post]`/`[link]`/`[order]`/`[ship]`/`[report]`/`[build-team]`/
+ * `[dispatch]`/`[draft]`（及 `[craft:xxx]` 别名）标记行与其后花括号配平的 JSON 载荷。
+ */
+const CRAFT_MARKER_LINE = /^[\t ]*\[(?:craft:)?(?:intake|post|link|order|ship|report|build-team|dispatch|draft)\]/;
+
+export function userVisibleText(text: string): string {
+  const lines = text.split("\n");
+  const out: string[] = [];
+  for (let i = 0; i < lines.length; i += 1) {
+    if (!CRAFT_MARKER_LINE.test(lines[i])) {
+      out.push(lines[i]);
+      continue;
+    }
+    // 标记行 + 其后花括号配平的 JSON 载荷整块剥掉
+    let depth = 0;
+    let seen = false;
+    for (; i < lines.length; i += 1) {
+      for (const ch of lines[i]) {
+        if (ch === "{") {
+          depth += 1;
+          seen = true;
+        } else if (ch === "}") {
+          depth -= 1;
+        }
+      }
+      if (seen && depth <= 0) break;
+      // 无载荷标记行：只剥标记这一行
+      if (!seen && (i + 1 >= lines.length || !/^\s*[{[]/.test(lines[i + 1]))) break;
+    }
+  }
+  return out.join("\n").replace(/\n{3,}/g, "\n\n").trim();
+}
