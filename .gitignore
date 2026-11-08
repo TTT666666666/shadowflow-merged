@@ -1,0 +1,26 @@
+node_modules/
+dist/
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.tmp-*
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+# .shadowflow 运行时数据不入库，但内置 AI 组织种子（agents/teams）要随仓库走
+.shadowflow/*
+!.shadowflow/agents/
+!.shadowflow/teams/
+# Node 网关运行时数据目录（app.sqlite、embedding-config.json 等含密钥文件）
+backend/node/.shadowflow/
+.env
+.env.*
+!.env.example
+*.log
+.DS_Store
+
+# E2E 演示运行时产物（会话 token、测试素材），不入库
+.sf-token
+.e2e-fixtures/
+.workbuddy/memory/
