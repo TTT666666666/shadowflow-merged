@@ -35,12 +35,13 @@ import {
 } from '../../lib/team-dag-draft';
 import { resolveProviderKey } from '../../transport/byokKey';
 import { isProviderId, PROVIDER_IDS, type ProviderId } from '../../transport/api-clients';
+import { PYTHON_BACKEND_URL } from '../../python-backend';
 
 const router = Router();
 
 const VALID_ID_RE = /^[a-z0-9][a-z0-9_-]{0,63}$/i;
 
-const PYTHON_BASE = process.env.PYTHON_BACKEND_URL ?? 'http://localhost:8000';
+const PYTHON_BASE = PYTHON_BACKEND_URL;
 
 // 路径解析与 team-yaml.ts 共用同一对常量（root 优先、server-local 兜底），
 // writer 覆写时沿用相同优先级。历史本地镜像硬编码 `cwd/../../..` 已废除。

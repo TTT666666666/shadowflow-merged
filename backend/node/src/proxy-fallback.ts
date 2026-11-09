@@ -82,7 +82,7 @@ export const proxyFallback = createProxyMiddleware({
           message: `Python backend ${PYTHON_BACKEND_URL} is not reachable: ${err.message}`,
           hint:
             'Start it via: docker-compose up shadowflow-api  OR  ' +
-            'python -m uvicorn shadowflow.server:app --port 8000',
+            `python -m uvicorn shadowflow.server:app --port ${new URL(PYTHON_BACKEND_URL).port || 8000}`,
         },
       });
       (res as any).writeHead(503, {

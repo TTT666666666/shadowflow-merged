@@ -154,7 +154,10 @@ def _get_task(task_id: str) -> Optional[A2ATask]:
 # AgentCard builder — reads env vars so it never hardcodes a URL
 # ---------------------------------------------------------------------------
 
-_SF_BASE_URL = os.getenv("SF_BASE_URL", "http://localhost:8000")
+# 默认基准 URL 从 config/ports.json 派生（port_config，2026-11-09 端口单一配置源）
+from shadowflow.port_config import DEFAULT_SF_BASE_URL  # noqa: E402
+
+_SF_BASE_URL = os.getenv("SF_BASE_URL", DEFAULT_SF_BASE_URL)
 _SF_ORG = os.getenv("SF_ORG_NAME", "ShadowFlow")
 _SF_ORG_URL = os.getenv("SF_ORG_URL", "https://github.com/Ravenveil/ShadowFlow")
 _SF_VERSION = os.getenv("SF_VERSION", "0.3.0")

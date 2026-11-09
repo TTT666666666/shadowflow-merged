@@ -39,8 +39,9 @@ import type { AgentRecord } from '../../storage/agents';
 
 const router = Router();
 
-const PYTHON_BASE =
-  process.env.PYTHON_BACKEND_URL ?? 'http://localhost:8000';
+// Python 基准 URL 统一从 python-backend.ts 取（config/ports.json 派生，2026-11-09）
+import { PYTHON_BACKEND_URL } from '../../python-backend';
+const PYTHON_BASE = PYTHON_BACKEND_URL;
 
 /** Map a yaml template to the AgentRecord shape FE expects (mirrors the
  *  yaml-template branch of the old `listAllAgents` for byte-compatibility). */

@@ -33,6 +33,7 @@
  */
 import type { CraftAction } from './craft-markers';
 import type { UserAttachment } from './contracts';
+import { selfBaseUrl } from '../config/ports';
 
 // ── 类型 ─────────────────────────────────────────────────────────────────────
 
@@ -426,7 +427,7 @@ export function toPostImages(
 // ── 数据面 REST 客户端（be-worker 契约；测试注入假实现）─────────────────────
 
 /**
- * 默认 REST 实现：Node 网关自身（:8002）上的 /api/craft-posts、
+ * 默认 REST 实现：Node 网关自身（端口见 config/ports.json）上的 /api/craft-posts、
  * /api/craft-products（be-worker 挂载）。超时/非 2xx/网络错 → null（fail-soft，
  * 调用方播报可见）。base 可注入（测试/多环境）。
  */
@@ -434,7 +435,8 @@ export function defaultCraftPostApi(base?: string): CraftPostApi {
   const root = (
     base ??
     process.env.SF_CRAFT_API_BASE ??
-    `http://127.0.0.1:${process.env.PORT ?? 8002}`
+    // 网关自身基准 URL 统一从 config/ports 派生（2026-11-09 端口单一配置源）
+    selfBaseUrl()
   ).replace(/\/$/, '');
   const call = async <T>(path: string, init?: RequestInit): Promise<T | null> => {
     try {

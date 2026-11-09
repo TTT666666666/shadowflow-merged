@@ -6,6 +6,11 @@
  * single source of truth instead of each side maintaining its own private
  * type alias. Anything cross-cutting goes here.
  *
+ * ★ 契约单源（2026-11-09，docs/新架构蓝图-v2.md §2）：本文件是**时间线契约**
+ *   的唯一源头，frontend/src/chat-api.ts 的子集跟随本文件演进（名称级同步由
+ *   scripts/check_contracts.py 校验）。workflow/run 域的运行时契约不在此——
+ *   那是 Python runtime/contracts.py 的领域，TS 产物在 ../generated/sf-contracts.ts。
+ *
  * See: docs/design/intent-workflow-design-v1.md §4.2 / §4.4.
  */
 

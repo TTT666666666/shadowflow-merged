@@ -3,13 +3,14 @@
 Generate TypeScript interfaces from ShadowFlow runtime Pydantic contracts.
 
 Usage:
-    python scripts/generate_ts_types.py
+    python scripts/generate_ts_types.py          # 生成两份产物
+    python scripts/generate_ts_types.py --out X  # 生成到指定路径（check 脚本内部用）
 
-Output:
-    src/core/types/workflow.ts
+Output（双产物，内容一致；2026-11-09 契约单源批，docs/新架构蓝图-v2.md §2）:
+    backend/node/src/generated/sf-contracts.ts
+    frontend/src/generated/sf-contracts.ts
 
 Fields are kept in snake_case to match JSON payloads.
-camelCase conversion is handled by src/adapter/caseConverter.ts at the fetch boundary.
 """
 
 from __future__ import annotations
@@ -23,7 +24,8 @@ from typing import Any
 logger = logging.getLogger(__name__)
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(PROJECT_ROOT))
+# shadowflow 包在 backend/python 下（合并仓库布局）；旧脚本误插仓库根已废除。
+sys.path.insert(0, str(PROJECT_ROOT / "backend" / "python"))
 
 from shadowflow.runtime.contracts import (  # noqa: E402
     ArtifactRef,
@@ -68,7 +70,10 @@ CORE_MODELS = [
     LoopRecord,
 ]
 
-OUTPUT_PATH = PROJECT_ROOT / "src" / "core" / "types" / "workflow.ts"
+OUTPUT_PATHS = [
+    PROJECT_ROOT / "backend" / "node" / "src" / "generated" / "sf-contracts.ts",
+    PROJECT_ROOT / "frontend" / "src" / "generated" / "sf-contracts.ts",
+]
 
 
 def _ts_type(node: dict[str, Any], defs: dict[str, Any]) -> str:
@@ -166,8 +171,12 @@ def _render_interface(name: str, schema: dict[str, Any], defs: dict[str, Any]) -
     return "\n".join(lines)
 
 
-def generate(output_path: Path = OUTPUT_PATH) -> None:
-    """Collect JSON schemas from CORE_MODELS, then write TypeScript interfaces."""
+def generate(output_path: Path | None = None) -> None:
+    """Collect JSON schemas from CORE_MODELS, then write TypeScript interfaces.
+
+    output_path=None → 写双产物（OUTPUT_PATHS）；给定路径 → 只写该路径
+    （check_contracts.py 生成临时文件比对时用）。
+    """
     all_defs: dict[str, Any] = {}
     def_origins: dict[str, str] = {}
     root_names: list[str] = []
@@ -196,11 +205,9 @@ def generate(output_path: Path = OUTPUT_PATH) -> None:
         if name not in all_defs:
             all_defs[name] = schema
 
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-
     lines: list[str] = [
-        "// AUTO-GENERATED — DO NOT EDIT. Source: shadowflow/runtime/contracts.py",
-        "// Run `python scripts/generate_ts_types.py` to regenerate after modifying contracts.py",
+        "// AUTO-GENERATED — DO NOT EDIT. Source: backend/python/shadowflow/runtime/contracts.py",
+        "// Run `python scripts/generate_ts_types.py` (or `npm run contracts:gen`) to regenerate.",
         "",
     ]
 
@@ -224,12 +231,16 @@ def generate(output_path: Path = OUTPUT_PATH) -> None:
     for name in root_names:
         emit(name)
 
-    output_path.write_text("\n".join(lines), encoding="utf-8")
-    try:
-        display = output_path.relative_to(PROJECT_ROOT)
-    except ValueError:
-        display = output_path
-    print(f"Generated {display} ({len(generated)} interfaces)")
+    text = "\n".join(lines)
+    targets = [output_path] if output_path is not None else OUTPUT_PATHS
+    for target in targets:
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(text, encoding="utf-8")
+        try:
+            display = target.relative_to(PROJECT_ROOT)
+        except ValueError:
+            display = target
+        print(f"Generated {display} ({len(generated)} interfaces)")
 
 
 if __name__ == "__main__":

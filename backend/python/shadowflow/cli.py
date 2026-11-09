@@ -1284,7 +1284,9 @@ def main():
     resume_parser.add_argument('--metadata', default=None, help='Optional resume metadata as JSON or text')
     
     serve_parser = subparsers.add_parser('serve', help='Start HTTP server')
-    serve_parser.add_argument('--port', type=int, default=8000, help='Server port')
+    # 默认端口从 config/ports.json 派生（port_config，2026-11-09 端口单一配置源）
+    from shadowflow.port_config import PYTHON_PORT as _DEFAULT_SERVE_PORT
+    serve_parser.add_argument('--port', type=int, default=_DEFAULT_SERVE_PORT, help='Server port')
     serve_parser.add_argument('--host', default='0.0.0.0', help='Server host')
 
     mcp_parser = subparsers.add_parser('mcp', help='Start MCP server (stdio mode by default)')

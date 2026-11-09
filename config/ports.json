@@ -1,0 +1,6 @@
+{
+  "_comment": "ShadowFlow 服务端口单一配置源（权威）。dev.mjs / vite.config.ts / Node 网关 / Python 编排核心全部从此处读取；进程自身 env（PORT、PYTHON_BACKEND_URL、FRONTEND_ORIGIN、SF_*_PORT）可覆盖。预留新增服务端口段：8010-8019。详见 docs/新架构蓝图-v2.md 第 1 节。",
+  "web": 8443,
+  "gateway": 8002,
+  "python": 8000
+}
