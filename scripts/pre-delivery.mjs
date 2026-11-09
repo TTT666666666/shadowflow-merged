@@ -39,11 +39,10 @@ const results = [];
 let stepNo = 0;
 
 /**
- * 已知基线失败数：只允许「数量不增加」的失败通过，新增失败仍然拦截。
- * 目前只剩 craft-posts.test.ts 的 2 个（[post] 标记未落库，属 craft 域历史问题，
- * 与本轮架构治理无关）。修完把这里改成 0 即恢复强门。
+ * 网关测试判定已收敛到 scripts/ci-node-tests.mjs（CI 与本地同一份白名单），
+ * 这里不再保留「允许 N 个失败」的数字口径 —— 数字口径无法区分「旧的 2 个」
+ * 和「新的 2 个」，会把新引入的失败一起放过去。
  */
-const NODE_TEST_KNOWN_FAILURES = 2;
 
 function run(name, cmd, args, opts = {}) {
   stepNo += 1;
@@ -154,10 +153,8 @@ run('Node 类型检查', IS_WIN ? 'npx.cmd' : 'npx', ['tsc', '--noEmit'], {
   blocking: false,
   note: 'craft-profit 域存在既有基线 TS 错误，逐批修复中；新增错误请人工比对',
 });
-runCaptured('Node 测试', IS_WIN ? 'npm.cmd' : 'npm', ['test'], {
-  cwd: path.join(ROOT, 'backend', 'node'),
-  allowFailures: NODE_TEST_KNOWN_FAILURES,
-  note: 'craft-posts.test.ts 2 个历史失败，属基线',
+run('Node 测试', process.execPath, ['scripts/ci-node-tests.mjs'], {
+  note: '与 CI 同一判定：已知基线按用例白名单放行（craft-posts 2 例），新增失败阻断',
 });
 run('前端类型检查', IS_WIN ? 'npx.cmd' : 'npx', ['tsc', '--noEmit'], {
   cwd: path.join(ROOT, 'frontend'),
