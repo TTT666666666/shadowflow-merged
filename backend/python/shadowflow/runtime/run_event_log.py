@@ -20,6 +20,8 @@ from __future__ import annotations
 
 import json
 import sqlite3
+
+from shadowflow.migrations import run_migrations
 import threading
 from datetime import datetime
 from pathlib import Path
@@ -179,24 +181,7 @@ class SqliteRunEventLog(InMemoryRunEventLog):
         Path(self._path).parent.mkdir(parents=True, exist_ok=True)
         self._conn = sqlite3.connect(self._path, check_same_thread=False)
         self._conn.execute("PRAGMA journal_mode=WAL")
-        self._conn.execute(
-            """
-            CREATE TABLE IF NOT EXISTS run_events (
-                run_id TEXT NOT NULL,
-                seq INTEGER NOT NULL,
-                event_type TEXT NOT NULL,
-                node_id TEXT,
-                iteration_index INTEGER,
-                payload TEXT NOT NULL,
-                created_at TEXT NOT NULL,
-                PRIMARY KEY (run_id, seq)
-            )
-            """
-        )
-        self._conn.execute(
-            "CREATE INDEX IF NOT EXISTS idx_run_events_run ON run_events(run_id)"
-        )
-        self._conn.commit()
+        run_migrations(self._conn, "runtime", baseline_tables=("run_events", "checkpoints"), log=None)
 
     def append(
         self,
@@ -281,26 +266,7 @@ class SqliteRunStore:
         Path(self._path).parent.mkdir(parents=True, exist_ok=True)
         self._conn = sqlite3.connect(self._path, check_same_thread=False)
         self._conn.execute("PRAGMA journal_mode=WAL")
-        self._conn.execute(
-            """
-            CREATE TABLE IF NOT EXISTS run_snapshots (
-                run_id TEXT PRIMARY KEY,
-                status TEXT NOT NULL,
-                workflow_id TEXT,
-                updated_at TEXT NOT NULL,
-                result_json TEXT NOT NULL
-            )
-            """
-        )
-        # Summary columns (added 2026-08-15 when list_runs moved to RunSummary
-        # objects); add-column-if-missing keeps older DB files loadable.
-        for column in ("request_id TEXT", "started_at TEXT"):
-            name = column.split()[0]
-            try:
-                self._conn.execute(f"ALTER TABLE run_snapshots ADD COLUMN {column}")
-            except sqlite3.OperationalError:
-                pass  # column already present
-        self._conn.commit()
+        run_migrations(self._conn, "runtime", baseline_tables=("run_events", "checkpoints"), log=None)
 
     def put(self, result: RunResult) -> None:
         payload = result.model_dump_json()
@@ -381,16 +347,7 @@ class SqliteRequestContextStore:
         Path(self._path).parent.mkdir(parents=True, exist_ok=True)
         self._conn = sqlite3.connect(self._path, check_same_thread=False)
         self._conn.execute("PRAGMA journal_mode=WAL")
-        self._conn.execute(
-            """
-            CREATE TABLE IF NOT EXISTS request_contexts (
-                run_id TEXT PRIMARY KEY,
-                request_json TEXT NOT NULL,
-                updated_at TEXT NOT NULL
-            )
-            """
-        )
-        self._conn.commit()
+        run_migrations(self._conn, "runtime", baseline_tables=("run_events", "checkpoints"), log=None)
 
     def put(self, run_id: str, request: RuntimeRequest) -> None:
         with self._lock:

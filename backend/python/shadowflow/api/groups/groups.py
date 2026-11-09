@@ -25,6 +25,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import logging
 import os
 import re
 import tempfile
@@ -44,6 +45,8 @@ from shadowflow.services.secretary_seed import (
 )
 
 router = APIRouter()
+
+logger = logging.getLogger(__name__)
 
 
 # ---------------------------------------------------------------------------
@@ -558,6 +561,13 @@ async def post_group_message(
     x_llm_provider: Optional[str] = Header(None, alias="X-LLM-Provider"),
     x_llm_model: Optional[str] = Header(None, alias="X-LLM-Model"),
     x_sf_no_dispatch: Optional[str] = Header(None, alias="X-SF-No-Dispatch"),
+    source: Optional[str] = Query(
+        None,
+        description=(
+            "内部调用来源标记。'gateway' = Node 网关代写消息，抑制 Python 自带的回复桥"
+            "（与已弃用的 X-SF-No-Dispatch 头等价，2026-11-09 起的显式语义）。"
+        ),
+    ),
 ) -> MessageItem:
     """Append a message to a group's persisted message log.
 
@@ -633,8 +643,15 @@ async def post_group_message(
 
     # Stream C bridge: only dispatch on user-originated messages. Agent /
     # system messages should never trigger another agent reply (would loop).
-    # Skipped when X-SF-No-Dispatch is set — the Node gateway owns the reply.
-    if body.sender_kind == "user" and rec.get("agent_ids") and not x_sf_no_dispatch:
+    # 内部来源（Node 网关代写）不触发 Python 回复桥：显式 `?source=gateway`，
+    # 旧头 X-SF-No-Dispatch 仍兼容一个版本周期（收到即打弃用日志）。
+    if x_sf_no_dispatch:
+        logger.warning(
+            "[groups] 收到已弃用的 X-SF-No-Dispatch 头，请改用 ?source=gateway"
+            "（该头将在下个版本移除）"
+        )
+    suppress_dispatch = bool(x_sf_no_dispatch) or source == "gateway"
+    if body.sender_kind == "user" and rec.get("agent_ids") and not suppress_dispatch:
         from shadowflow.api.groups._chat_bridge import (  # noqa: PLC0415
             build_byok_override,
             dispatch_agent_reply,

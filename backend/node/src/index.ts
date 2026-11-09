@@ -1,6 +1,6 @@
 /**
  * index.ts — ShadowFlow API server
- * Port: 8002
+ * Port: 见 config/ports.json（默认 8002，env PORT 可覆盖）
  */
 
 // MUST be the first import: loads repo-root .env into process.env before any
@@ -80,6 +80,8 @@ import { apiGuard } from './middleware/api-guard';
 import { applyHttpServerTuning, buildCorsOrigins } from './lib/http-compat';
 import { resolveWebDist, webHosting } from './lib/web-hosting';
 import { proxyFallback } from './proxy-fallback';
+// 端口单一配置源（config/ports.json）：端口与默认 URL 一律从 config/ports 取（2026-11-09）
+import { GATEWAY_PORT, FRONTEND_ORIGIN } from './config/ports';
 import { initSqlite } from './storage/sqlite';
 // B2 中断恢复收尾 — 启动清扫上一进程遗留的孤儿 hop / NULL run_index（2026-11-05 迭代三）
 import { sweepOrphanHops } from './storage/agent-hops';
@@ -90,8 +92,7 @@ import {
   seedBuiltinDesignSystems,
 } from './loaders/design-systems';
 
-const PORT = Number(process.env.PORT ?? 8002);
-const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN ?? 'http://localhost:3007';
+const PORT = GATEWAY_PORT;
 
 const app = express();
 
@@ -232,12 +233,19 @@ app.use('/api/conversations', conversationsRouter);
 app.use('/api/groups', groupsChatRouter);
 // 1b — Node 自服务 /api/groups（建群/list/get/patch/messages 读+兜底持久化/reactions/
 // pin/user-settings/SSE）。挂在 groupsChatRouter **之后**（POST /:id/messages +
-// GET /:id/timeline 仍先被网关拦截跑回复/聚合），proxyFallback **之前**。仅
-// SF_GROUPS_BACKEND==='node' 时挂载；默认（python/未设）不挂 → /api/groups/* 仍
-// 经 proxyFallback 转 Python，行为零变化。DM resolve 在 /api/chat/* 下单独挂。
+// GET /:id/timeline 仍先被网关拦截跑回复/聚合），proxyFallback **之前**。
+//
+// ⚠ 2026-11-09（单写者收敛）：SF_GROUPS_BACKEND=node 属**实验分支，不再维护**。
+// 默认（python/未设）不挂载 → /api/groups/* 经 proxyFallback 转 Python，
+// .shadowflow/groups/*.json 是唯一权威存储。代码保留仅为回滚余地，
+// 归属与表结构见 docs/群存储归属.md。
 if (process.env.SF_GROUPS_BACKEND === 'node') {
   app.use('/api/groups', groupsNodeRouter);
-  console.log('[groups] SF_GROUPS_BACKEND=node — /api/groups served by Node SQLite store');
+  console.warn(
+    '[groups] ⚠ SF_GROUPS_BACKEND=node 属实验分支，自 2026-11-09 起不再维护；' +
+      '/api/groups 由 Node SQLite store 提供，与 Python JSON 权威存储可能漂移。' +
+      '详见 docs/群存储归属.md',
+  );
 }
 // DM resolve 归属感知（2026-11-08 修「消息发不出来」）：双后端统一挂载——每个
 // 登录身份只拿得到自己的 DM（本人已有 → 无主认领 → 新建），绝不递别人的会话

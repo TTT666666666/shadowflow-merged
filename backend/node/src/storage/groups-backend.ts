@@ -10,8 +10,9 @@
  *
  *   - 'python'（默认）：保持现状——HTTP 打 Python:8000。SF_GROUPS_BACKEND 不设时
  *     行为零变化，proxyFallback 仍把 /api/groups/* 转 Python。
- *   - 'node'：直调 storage/groups-store.ts（Node SQLite）。配合 index.ts 把
- *     groupsNodeRouter 挂在 proxyFallback 之前，群数据完全留在 Node。
+ *   - 'node'（**实验分支，2026-11-09 起不再维护**）：直调 storage/groups-store.ts。
+ *     代码保留仅为回滚余地；启用会打醒目告警（见 lib/groups-mode.ts）。
+ *   - 'dual'（**实验分支，不再维护**）：双写校验，违反单一写者，仅历史迁移期使用。
  *
  * 网关只用到的最小接口（不是 groups-store 全集）：
  *   - getGroup(id)        → { agent_ids, messages, workspace_dir, team_id, kind } | null
@@ -22,9 +23,10 @@
  * 所以 groups-chat.ts 的 GroupRecord/ChatMessageItem 解构无需区分后端。
  */
 
-import { PYTHON_BACKEND_URL } from '../python-backend';
 import * as store from './groups-store';
 import type { UserAttachment } from '../lib/contracts';
+import { pythonGroupsFetch } from '../lib/groups-persistence';
+import { assertGroupsBackendMode } from '../lib/groups-mode';
 
 /** 网关消费的最小群形状（蛇形，与 Python record JSON 对齐）。 */
 export interface BackendGroup {
@@ -74,16 +76,15 @@ export interface GroupsBackend {
   listMessages(groupId: string): Promise<BackendGroup['messages']>;
 }
 
-// ── Python 实现（HTTP；搬自 groups-chat.ts 原 pyGet/pyPostMessage） ───────────
+// ── Python 实现（HTTP；统一走 lib/groups-persistence.ts，不再各自拼 URL） ──────
 
 const pythonBackend: GroupsBackend = {
   async getGroup(groupId) {
     try {
-      const res = await fetch(
-        `${PYTHON_BACKEND_URL}/api/groups/${encodeURIComponent(groupId)}`,
+      const json = await pythonGroupsFetch<{ data?: BackendGroup } | BackendGroup>(
+        `/${encodeURIComponent(groupId)}`,
       );
-      if (!res.ok) return null;
-      const json = (await res.json()) as { data?: BackendGroup } | BackendGroup;
+      if (!json) return null;
       return ((json as { data?: BackendGroup }).data ?? json) as BackendGroup;
     } catch {
       return null;
@@ -91,17 +92,12 @@ const pythonBackend: GroupsBackend = {
   },
 
   async appendMessage(groupId, body, opts = {}) {
-    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-    if (opts.noDispatch) headers['X-SF-No-Dispatch'] = '1';
-    const res = await fetch(
-      `${PYTHON_BACKEND_URL}/api/groups/${encodeURIComponent(groupId)}/messages`,
-      { method: 'POST', headers, body: JSON.stringify(body) },
-    );
-    if (!res.ok) {
-      const txt = await res.text().catch(() => '');
-      throw new Error(`python persist failed ${res.status}: ${txt}`);
-    }
-    return res.json().catch(() => null);
+    // internal=true ⇒ `?source=gateway`（显式语义）+ 兼容头 X-SF-No-Dispatch。
+    return pythonGroupsFetch(`/${encodeURIComponent(groupId)}/messages`, {
+      method: 'POST',
+      body,
+      internal: opts.noDispatch === true,
+    });
   },
 
   async listMessages(groupId) {
@@ -190,14 +186,13 @@ const dualBackend: GroupsBackend = {
 };
 
 /**
- * 按 `SF_GROUPS_BACKEND` 选后端：
- *   'node' → 直调 store（群完全留 Node）。
- *   'dual' → 阶段2 双写校验：写两边、读 Node 缺则回落 Python、后台 diff 报警。
- *   其余（含未设）→ Python HTTP（默认，零变化）。
- * 每次调用读 env（不缓存）——测试可在用例间切换，运行期 env 固定时开销可忽略。
+ * 按 `SF_GROUPS_BACKEND` 选后端（模式判定与告警统一在 lib/groups-mode.ts）：
+ *   'node' → 直调 store（**实验分支，不再维护**）。
+ *   'dual' → 双写校验（**实验分支，不再维护**；违反单一写者）。
+ *   其余（含未设）→ Python HTTP（默认，唯一受支持的生产路径）。
  */
 export function getGroupsBackend(): GroupsBackend {
-  const mode = process.env.SF_GROUPS_BACKEND;
+  const mode = assertGroupsBackendMode();
   if (mode === 'node') return nodeBackend;
   if (mode === 'dual') return dualBackend;
   return pythonBackend;

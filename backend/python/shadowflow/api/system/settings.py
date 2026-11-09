@@ -12,9 +12,13 @@ Endpoints:
   GET    /api/settings/appearance                  — read appearance (theme)
   PUT    /api/settings/appearance                  — write appearance (theme)
   GET    /api/settings/byok                        — read BYOK keys (masked) + model
-  PUT    /api/settings/byok                        — write a provider key and/or model
-  DELETE /api/settings/byok/{provider}             — clear a provider key
+  PUT    /api/settings/byok                        — 已停用（409）：写入口在 Node 网关
+  DELETE /api/settings/byok/{provider}             — 已停用（409）：写入口在 Node 网关
   GET    /api/settings/byok/models                 — list supported models
+
+BYOK 单写者（2026-11-09）：配置真源 = Node 写的 ``.shadowflow/settings.json`` 的 ``byok``
+段，读逻辑见 ``shadowflow.byok_source``。旧 ``.shadowflow/byok-config.json`` 只读兼容。
+浏览器实际打到的是 Node 的同名路由（先挂载），本模块的 GET 仅供 Python 内部/调试。
   GET    /api/settings/media                       — read media provider keys (masked)
   PUT    /api/settings/media                       — write a media provider key
   DELETE /api/settings/media/{provider_id}         — clear a media provider key
@@ -42,6 +46,8 @@ if sys.platform == "win32":
 from fastapi import APIRouter, HTTPException, Query, Request
 from fastapi.responses import FileResponse, Response
 from pydantic import BaseModel
+
+from shadowflow import byok_source
 
 logger = logging.getLogger(__name__)
 
@@ -73,7 +79,13 @@ _MEDIA_PROVIDERS = [
 ]
 
 _VALID_THEMES = {"dark", "light", "system"}
-_VALID_PROVIDERS = {"anthropic", "openai", "google", "deepseek", "azure", "zhipu", "mimo"}
+# 内置 provider 目录（2026-11-09 与 Node `transport/api-clients/types.ts` 的 ProviderId
+# 对齐）：OpenAI 兼容的一律可在 Python 侧走 openai-compat 执行，这里只影响
+# 「GET /byok 的展示集合」与「旧数据回退时的 provider 名」，不再承担写入校验。
+_VALID_PROVIDERS = {
+    "anthropic", "openai", "google", "deepseek", "azure", "zhipu", "mimo",
+    "qwen", "moonshot", "mistral", "groq", "openrouter", "ollama", "lmstudio",
+}
 _DEFAULT_MODEL = "claude-sonnet-4-6"
 
 BYOK_MODELS: List[Dict[str, Any]] = [
@@ -462,24 +474,18 @@ def _write_appearance(theme: str) -> Dict[str, Any]:
 # ---------------------------------------------------------------------------
 
 def _read_byok_config() -> Dict[str, Any]:
-    try:
-        cfg = json.loads(BYOK_CONFIG_FILE.read_text())
-        return {
-            "keys": cfg.get("keys", {}),
-            "baseUrls": cfg.get("baseUrls", {}),
-            "model": cfg.get("model", _DEFAULT_MODEL),
-        }
-    except FileNotFoundError:
-        return {"keys": {p: None for p in _VALID_PROVIDERS}, "baseUrls": {}, "model": _DEFAULT_MODEL}
+    """BYOK 配置统一来源 = Node 写的 ``settings.json`` byok 段（见 shadowflow.byok_source）。
 
-
-def _write_byok_config(config: Dict[str, Any]) -> None:
-    BYOK_CONFIG_FILE.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
-    tmp = BYOK_CONFIG_FILE.with_suffix(f".{os.getpid()}.tmp")
-    tmp.write_text(json.dumps(config, indent=2))
-    tmp.chmod(0o600)
-    tmp.rename(BYOK_CONFIG_FILE)
-    BYOK_CONFIG_FILE.chmod(0o600)
+    settings.json 缺失时按 provider 回退到旧 ``byok-config.json``（只读兼容），
+    再回退到环境变量。**Python 侧不写任何配置文件**——写入口只有 Node 网关。
+    """
+    cfg = byok_source.read_config()
+    providers = set(cfg.providers) | set(_VALID_PROVIDERS)
+    return {
+        "keys": {p: cfg.api_key(p) for p in providers},
+        "baseUrls": {p: cfg.base_url(p) for p in providers},
+        "model": cfg.default_model,
+    }
 
 
 def _mask_key(key: Optional[str]) -> Optional[str]:
@@ -490,10 +496,11 @@ def _mask_key(key: Optional[str]) -> Optional[str]:
 
 
 def _byok_public_view(config: Dict[str, Any]) -> Dict[str, Any]:
-    """Return BYOK config with keys masked."""
+    """Return BYOK config with keys masked. 含 settings.json 里注册的自定义 provider。"""
+    providers = sorted(set(config.get("keys", {})) | set(_VALID_PROVIDERS))
     return {
-        "keys": {p: _mask_key(config["keys"].get(p)) for p in _VALID_PROVIDERS},
-        "baseUrls": {p: config.get("baseUrls", {}).get(p) for p in _VALID_PROVIDERS},
+        "keys": {p: _mask_key(config["keys"].get(p)) for p in providers},
+        "baseUrls": {p: config.get("baseUrls", {}).get(p) for p in providers},
         "model": config.get("model", _DEFAULT_MODEL),
     }
 
@@ -841,37 +848,30 @@ async def get_byok() -> Dict[str, Any]:
 
 @router.put("/byok")
 async def put_byok(body: ByokWriteRequest) -> Dict[str, Any]:
-    """Save a provider API key and/or update the selected model."""
-    if body.provider not in _VALID_PROVIDERS:
-        raise HTTPException(status_code=422, detail="Invalid provider")
-    try:
-        config = _read_byok_config()
-        if body.apiKey is not None:
-            config["keys"][body.provider] = body.apiKey if body.apiKey else None
-        if body.model is not None:
-            config["model"] = body.model
-        if body.baseUrl is not None:
-            config.setdefault("baseUrls", {})[body.provider] = body.baseUrl or None
-        _write_byok_config(config)
-    except Exception as exc:
-        logger.error("Failed to write BYOK config: %s", exc)
-        raise HTTPException(status_code=500, detail="Failed to save BYOK config") from exc
-    return {"ok": True}
+    """**已停用**：BYOK 写入口统一在 Node 网关（``PUT /api/settings/byok/:providerId``）。
+
+    历史上本端点写 ``.shadowflow/byok-config.json``，与 Node 的 settings.json 形成
+    双写面。2026-11-09 收敛为单写者后，写操作一律 409 并指路。
+    """
+    raise HTTPException(
+        status_code=409,
+        detail=(
+            "BYOK 写入口已迁移到网关：PUT /api/settings/byok/{providerId}。"
+            "Python 侧只读 settings.json，不再写 byok-config.json。"
+        ),
+    )
 
 
 @router.delete("/byok/{provider}")
 async def delete_byok_provider(provider: str) -> Dict[str, Any]:
-    """Clear the stored API key for a provider."""
-    if provider not in _VALID_PROVIDERS:
-        raise HTTPException(status_code=422, detail="Invalid provider")
-    try:
-        config = _read_byok_config()
-        config["keys"][provider] = None
-        _write_byok_config(config)
-    except Exception as exc:
-        logger.error("Failed to clear BYOK key for %s: %s", provider, exc)
-        raise HTTPException(status_code=500, detail="Failed to clear BYOK key") from exc
-    return {"ok": True}
+    """**已停用**：清空密钥请走网关 ``DELETE /api/settings/byok/{providerId}``。"""
+    raise HTTPException(
+        status_code=409,
+        detail=(
+            "BYOK 写入口已迁移到网关：DELETE /api/settings/byok/{providerId}。"
+            "Python 侧只读 settings.json，不再写 byok-config.json。"
+        ),
+    )
 
 
 # ---------------------------------------------------------------------------

@@ -1,0 +1,17 @@
+-- 003-additive-columns.sql — 收编历史 addColumnIfMissing() 运行时加列。
+--
+-- 此前这些列由 getDb() 里的 addColumnIfMissing() 每次启动 PRAGMA 检查后补。改成
+-- 迁移后只在版本号推进时执行一次；@add-column 指令本身仍带存在性检查，所以对
+-- 「列早就被老逻辑补过的库」同样安全。
+--
+-- 依赖：002 必须先建 messages/conversations/group_messages 所在表（001 建前两张，
+-- 002 建 group_messages）。
+
+-- 消息时间线显式 id（与 Python 时间线消息互链）
+-- @add-column messages timeline_message_id TEXT
+-- 消息编辑时间戳（Polynoia-parity 聊天侧编辑）
+-- @add-column messages edited_at TEXT
+-- conversation.group_id ↔ group.conversation_id 显式互链（B1 统一会话内核）
+-- @add-column conversations group_id TEXT
+-- 群消息随行附件（UserAttachment[] JSON 文本；无附件 NULL）
+-- @add-column group_messages attachments TEXT

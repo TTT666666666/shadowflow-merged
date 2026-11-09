@@ -321,6 +321,28 @@ def test_user_message_no_dispatch_header_suppresses_python_bridge(monkeypatch, f
     assert all(m.get("sender_kind") != "agent" for m in msgs[before:])
 
 
+def test_user_message_source_gateway_query_suppresses_python_bridge(monkeypatch, fake_llm):
+    """?source=gateway 是 X-SF-No-Dispatch 的显式替代（2026-11-09 起的正式语义）：
+    用户消息照常落库，但不触发 Python 回复桥。"""
+    from fastapi.testclient import TestClient
+    from shadowflow.server import app
+
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "k")
+    _make_agent("a1", "Alice", soul="s")
+    _make_group("g1", ["a1"], user_text="seed")
+
+    before = len(groups_mod._load_group("g1")["messages"])
+    client = TestClient(app)
+    resp = client.post(
+        "/api/groups/g1/messages?source=gateway",
+        json={"content": "hi", "sender_name": "user", "sender_kind": "user"},
+    )
+    assert resp.status_code == 201
+    msgs = groups_mod._load_group("g1")["messages"]
+    assert len(msgs) == before + 1
+    assert all(m.get("sender_kind") != "agent" for m in msgs[before:])
+
+
 def test_agent_message_publishes_sse_via_http(fake_llm):
     """POSTing a sender_kind='agent' message publishes agent.message on the bus
     (this is how the Node gateway's reply reaches the browser)."""

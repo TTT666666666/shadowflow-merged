@@ -71,8 +71,21 @@ _BYOK_MISSING_NOTICE = (
 
 
 def _resolve_byok_env() -> Optional[Tuple[str, str, str]]:
-    """Return (api_key, provider_name, default_model) for the first env var
-    that is populated, or None if no BYOK key is available."""
+    """Return (api_key, provider_name, default_model) 或 None。
+
+    2026-11-09 收敛：优先读统一配置源（``shadowflow.byok_source`` ⇒ Node 写的
+    settings.json byok 段 + 旧文件兼容），这样「前端 BYOK 页面配的 key」在异步派发
+    的群回复里也生效；读不到再退回纯环境变量（老部署/容器场景）。
+    """
+    from shadowflow import byok_source
+
+    found = byok_source.resolve_any_key()
+    if found:
+        provider_id, api_key, model = found
+        provider_name = "claude" if provider_id == "anthropic" else provider_id
+        resolved_model = model or _PROVIDER_DEFAULT_MODEL.get(provider_name, "glm-4-flash")
+        return api_key, provider_name, resolved_model
+
     for env_name, provider_name, default_model in _BYOK_ENV_PREFERENCE:
         api_key = os.environ.get(env_name)
         if api_key:

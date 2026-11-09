@@ -9,6 +9,7 @@ from typing import Any, Dict, List, Literal, Optional
 
 from pydantic import BaseModel, Field
 
+from shadowflow.migrations import run_migrations
 from shadowflow.runtime.contracts import CheckpointRef, utc_now
 
 
@@ -99,21 +100,7 @@ class SqliteCheckpointStore(BaseCheckpointStore):
         Path(self._path).parent.mkdir(parents=True, exist_ok=True)
         self._conn = sqlite3.connect(self._path, check_same_thread=False)
         self._conn.execute("PRAGMA journal_mode=WAL")
-        self._conn.execute(
-            """
-            CREATE TABLE IF NOT EXISTS checkpoints (
-                checkpoint_id TEXT PRIMARY KEY,
-                run_id TEXT NOT NULL,
-                stored_at TEXT NOT NULL,
-                record_json TEXT NOT NULL,
-                checkpoint_json TEXT NOT NULL
-            )
-            """
-        )
-        self._conn.execute(
-            "CREATE INDEX IF NOT EXISTS idx_checkpoints_run ON checkpoints(run_id)"
-        )
-        self._conn.commit()
+        run_migrations(self._conn, "runtime", baseline_tables=("run_events", "checkpoints"), log=None)
 
     def put(self, checkpoint: CheckpointRef) -> StoredCheckpointRecord:
         checkpoint_copy = checkpoint.model_copy(deep=True)

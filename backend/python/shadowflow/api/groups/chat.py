@@ -96,7 +96,16 @@ async def chat_completions(
         )
 
     model = x_llm_model or DEFAULT_MODELS.get(provider_name, "")
-    config = LLMConfig(model=model, api_key=x_llm_key)
+    api_key = x_llm_key
+    if not api_key:
+        # 2026-11-09 收敛：未带 X-LLM-Key 时读统一配置源（Node 写的 settings.json
+        # byok 段 / 旧 byok-config.json / 环境变量），不再只依赖调用方传参。
+        from shadowflow import byok_source
+
+        api_key = byok_source.resolve_key("anthropic" if provider_name == "claude" else provider_name)
+        if not model:
+            model = byok_source.resolve_model()
+    config = LLMConfig(model=model, api_key=api_key)
 
     # Try to load agent soul if agent_id provided
     if body.agent_id:

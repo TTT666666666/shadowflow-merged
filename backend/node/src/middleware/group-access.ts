@@ -20,6 +20,7 @@
 
 import type { NextFunction, Request, RequestHandler, Response } from 'express';
 import { PYTHON_BACKEND_URL } from '../python-backend';
+import { pythonGroupsBase } from '../lib/groups-persistence';
 import { getReqUser, sendNotFound } from './auth-context';
 import { accessOwner, setOwner, type OwnerUser } from '../storage/resource-owners';
 
@@ -105,7 +106,9 @@ async function proxyGroupRoot(
 ): Promise<void> {
   const qsIndex = req.url.indexOf('?');
   const query = qsIndex >= 0 ? req.url.slice(qsIndex) : '';
-  const target = `${PYTHON_BACKEND_URL}/api/groups${query}`;
+  // 裸流代理（要原样透传状态码/信封，不能走 pythonGroupsFetch 的抛错语义），
+  // 但 URL 仍从 lib/groups-persistence.ts 取，保持「群 API 只在一处拼」。
+  const target = `${pythonGroupsBase()}${query}`;
   const ac = new AbortController();
   const timer = setTimeout(() => ac.abort(), 15_000);
   try {

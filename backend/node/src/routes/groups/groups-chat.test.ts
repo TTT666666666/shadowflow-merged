@@ -52,7 +52,8 @@ async function main() {
     req.on('data', (c) => (raw += c));
     req.on('end', () => {
       const body = raw ? JSON.parse(raw) : {};
-      if (req.method === 'POST' && /\/api\/groups\/.+\/messages$/.test(req.url ?? '')) {
+      // 2026-11-09: 内部来源改为显式 ?source=gateway，URL 可能带查询串。
+      if (req.method === 'POST' && /\/api\/groups\/.+\/messages(\?.*)?$/.test(req.url ?? '')) {
         captured.push({
           path: req.url ?? '',
           noDispatch: req.headers['x-sf-no-dispatch'] === '1',
@@ -62,7 +63,7 @@ async function main() {
         res.end(JSON.stringify({ ...body, message_id: 'm-' + captured.length }));
         return;
       }
-      if (req.method === 'GET' && /\/api\/groups\/[^/]+$/.test(req.url ?? '')) {
+      if (req.method === 'GET' && /\/api\/groups\/[^/]+(\?.*)?$/.test(req.url ?? '')) {
         // group record — NO agents so fan-out short-circuits (writes a system
         // notice via POST, which we also capture but don't assert on).
         res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -100,7 +101,9 @@ async function main() {
   await new Promise((r) => setTimeout(r, 150));
   const userWrite = captured.find((c) => c.body.sender_kind === 'user');
   check('user message persisted to Python', !!userWrite, captured);
-  check('user write carries X-SF-No-Dispatch', !!userWrite?.noDispatch, userWrite);
+  // 2026-11-09 收敛：新语义是显式 query，旧头同时保留一个版本周期。
+  check('user write carries ?source=gateway', !!userWrite?.path.includes('source=gateway'), userWrite?.path);
+  check('user write carries X-SF-No-Dispatch (legacy)', !!userWrite?.noDispatch, userWrite);
 
   // ── 3. agent message: persisted WITHOUT suppress header, no fanout ──────
   captured.length = 0;
