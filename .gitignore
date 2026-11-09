@@ -28,3 +28,6 @@ backend/node/.shadowflow/
 # Python 后端运行时数据（群 JSON、runtime.sqlite、tool schema 缓存）不入库
 backend/python/.shadowflow/
 backend/python/_data/
+
+# 用户/测试导入的自定义流程模板（运行时目录，seed 模板在 templates/*.yaml）
+templates/custom/

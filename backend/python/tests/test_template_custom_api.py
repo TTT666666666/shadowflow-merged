@@ -63,15 +63,22 @@ metadata: {}
 
 @pytest.fixture(autouse=True)
 def cleanup_custom_templates():
-    """Remove any custom template files created during tests."""
-    custom_dir = pathlib.Path("templates/custom")
+    """测试期间新增的 custom 模板文件一律清理。
+
+    旧实现只删测试自己 append 登记的路径 —— 断言先失败、或 pytest 被强杀时，
+    yield 之后的清理根本不执行，残留文件会让下一轮 T1/T4/T5/T6 全部假 409。
+    这里改成「开始快照 + 结束按差集删」，不依赖测试自觉登记。
+    """
+    custom_dir = REPO_ROOT / "templates" / "custom"
+    before = set(custom_dir.glob("*.yaml")) if custom_dir.is_dir() else set()
     created: list[pathlib.Path] = []
 
-    yield created  # tests append paths they create
+    yield created  # 测试仍可 append，但清理不再依赖它
 
-    for p in created:
-        if p.exists():
-            p.unlink()
+    if not custom_dir.is_dir():
+        return
+    for p in set(custom_dir.glob("*.yaml")) - before:
+        p.unlink(missing_ok=True)
 
 
 # ---------------------------------------------------------------------------
