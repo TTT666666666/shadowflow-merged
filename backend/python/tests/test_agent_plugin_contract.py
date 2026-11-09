@@ -7,8 +7,17 @@ from pathlib import Path
 
 import pytest
 
-CONTRACT_PATH = Path(__file__).parent.parent / "docs" / "AGENT_PLUGIN_CONTRACT.md"
-README_PATH = Path(__file__).parent.parent / "README.md"
+# 合并仓库布局：docs/ 与 README.md 已提升到仓库根；仓库根优先、原路径兜底。
+_BACKEND_PYTHON = Path(__file__).resolve().parent.parent
+_REPO_ROOT = _BACKEND_PYTHON.parent.parent
+CONTRACT_PATH = next(
+    (p for p in (_REPO_ROOT / "docs" / "AGENT_PLUGIN_CONTRACT.md", _BACKEND_PYTHON / "docs" / "AGENT_PLUGIN_CONTRACT.md") if p.exists()),
+    _REPO_ROOT / "docs" / "AGENT_PLUGIN_CONTRACT.md",
+)
+README_PATH = next(
+    (p for p in (_REPO_ROOT / "README.md", _BACKEND_PYTHON / "README.md") if p.exists()),
+    _REPO_ROOT / "README.md",
+)
 
 
 # ---------------------------------------------------------------------------

@@ -14,6 +14,17 @@ from shadowflow.server import app
 
 client = TestClient(app)
 
+# 合并仓库布局：服务端以「仓库根」为 cwd 解析 templates/（seed）与 templates/custom。
+# pytest 默认 cwd=backend/python，会让 seed 目录解析到不存在的 backend/python/templates，
+# 故本文件统一把 cwd 切到仓库根，与生产启动方式（仓库根启动 uvicorn）保持一致。
+REPO_ROOT = pathlib.Path(__file__).resolve().parents[3]
+
+
+@pytest.fixture(autouse=True)
+def _chdir_to_repo_root(monkeypatch):
+    monkeypatch.chdir(REPO_ROOT)
+
+
 # ---------------------------------------------------------------------------
 # Minimal valid template YAML
 # ---------------------------------------------------------------------------

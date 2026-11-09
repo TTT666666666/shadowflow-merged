@@ -63,6 +63,17 @@ BYOK 设置页 · 数据看板                              │
 | Node 网关 | 8002 | `backend/node/`，Express API 聚合（tsx watch 热重载） |
 | Python FastAPI | 8000 | `backend/python/`，`shadowflow.server:app`（--reload 热重载） |
 
+> **端口单一配置源**：三个端口统一定义在 `config/ports.json`（env `SF_WEB_PORT` /
+> `SF_GW_PORT` / `SF_PY_PORT` 可覆盖），dev.mjs、vite.config、Node 网关、Python
+> 全部从这一处读取，改端口只改这一个文件。架构治理细节见
+> [docs/新架构蓝图-v2.md](docs/新架构蓝图-v2.md)。
+>
+> **数据归属**（单一写者）：群数据 = Python（`.shadowflow/groups/*.json`，见
+> [docs/群存储归属.md](docs/群存储归属.md)）；记忆数据 = Node 业务记忆 + Python RAG，
+> 见 [docs/记忆数据地图.md](docs/记忆数据地图.md)；BYOK 配置 = Node 的
+> `settings.json`（Python 只读）。数据库演进统一走版本化迁移（`backend/node/migrations/`、
+> `backend/python/shadowflow/migrations/`），`SF_GROUPS_BACKEND=node|dual` 为实验分支不再维护。
+
 ## 环境要求
 
 | 依赖 | 版本 | 说明 |
@@ -136,13 +147,13 @@ curl http://localhost:8000/docs         # Python FastAPI 文档页
 ## 分步启动（不用 dev.mjs 时）
 
 ```bash
-# 1) Python FastAPI（仓库根目录，端口 8000）
-python -m uvicorn shadowflow.server:app --app-dir backend/python --host 127.0.0.1 --port 8000
+# 1) Python FastAPI（仓库根目录，端口取自 config/ports.json）
+npm run dev:python
 
-# 2) Node 网关（端口 8002，tsx watch 热重载）
+# 2) Node 网关（tsx watch 热重载）
 cd backend/node && npm run dev
 
-# 3) 前端（端口 8443，/api、/projects 已代理到 :8002）
+# 3) 前端（/api、/projects 已代理到 Node 网关）
 cd frontend && npm run dev
 ```
 
@@ -162,6 +173,33 @@ cd frontend && npm run dev
 | npm / pip install 卡死超时 | 设国内镜像后重试（见「安装依赖」注） |
 
 更详细的从零安装与报错速查见 [INSTALL.md](INSTALL.md)。
+
+## 交付前必跑（交付门）
+
+改完代码、提交前跑一次：
+
+```bash
+npm run gate        # 全量：端口配置 → 契约 → Python 测试 → Node tsc/测试 → 前端 tsc/测试/构建
+npm run gate:fast   # 快速：跳过前端构建，其余相同
+```
+
+六道闸口，任一失败退出码非 0，**不许带病交付**：
+
+| # | 闸口 | 失败含义 |
+|---|---|---|
+| 1 | `config/ports.json` 校验 | 三键（web/gateway/python）缺失、非整数或端口冲突 |
+| 2 | `scripts/check_contracts.py` | TS 契约与 Python Pydantic 源漂移，或前端出现密钥形状字面量 |
+| 3 | `pytest`（backend/python） | 后端行为回归 |
+| 4 | `tsc --noEmit`（backend/node） | ⚠ 非阻断：craft 域有已知基线错误，修完改回阻断 |
+| 5 | `vitest`（backend/node） | 网关回归 |
+| 6 | 前端 `tsc` + `vitest` + `vite build` | 前端类型/行为/打包回归 |
+
+CI（`.github/workflows/ci.yml`）把这六道闸口拆成 4 个并行 job（contracts / test-python /
+test-node / test-web），push 与 PR 都跑。
+
+## How to Plug Your Agent
+
+想接入自己的 Agent？完整契约见 [`docs/AGENT_PLUGIN_CONTRACT.md`](docs/AGENT_PLUGIN_CONTRACT.md)：AgentExecutor ABC 三方法（`dispatch` / `stream_events` / `capabilities`）、四种 kind（api / cli / mcp / acp）、事件命名空间（`agent.dispatched` … `agent.rejected`）与 YAML 声明样板。
 
 ## 目录结构
 

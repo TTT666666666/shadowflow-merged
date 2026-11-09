@@ -283,7 +283,13 @@ class TestRealRegistry:
         assert len(manifests) >= 5, f"Expected ≥ 5 packs, found {len(manifests)}"
 
     def test_real_registry_index_exists(self):
-        packs_root = Path(__file__).resolve().parents[1] / "templates" / "agent-packs"
+        # 合并仓库布局：templates/ 已提升到仓库根；仓库根优先、原路径兜底。
+        backend_python = Path(__file__).resolve().parents[1]
+        repo_root = backend_python.parent.parent
+        packs_root = next(
+            (p for p in (repo_root / "templates" / "agent-packs", backend_python / "templates" / "agent-packs") if p.is_dir()),
+            repo_root / "templates" / "agent-packs",
+        )
         assert (packs_root / "registry-index.yaml").exists()
 
 

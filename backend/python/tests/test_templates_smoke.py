@@ -28,7 +28,13 @@ from shadowflow.runtime.contracts import (
     WorkflowPolicyMatrixSpec,
 )
 
-TEMPLATES_DIR = pathlib.Path(__file__).parent.parent / "templates"
+# 合并仓库布局：templates/ 已提升到仓库根；仓库根优先、原路径兜底。
+_BACKEND_PYTHON = pathlib.Path(__file__).resolve().parent.parent
+_REPO_ROOT = _BACKEND_PYTHON.parent.parent
+TEMPLATES_DIR = next(
+    (p for p in (_REPO_ROOT / "templates", _BACKEND_PYTHON / "templates") if p.is_dir()),
+    _REPO_ROOT / "templates",
+)
 
 SEED_TEMPLATE_FILES = [
     "solo-company.yaml",

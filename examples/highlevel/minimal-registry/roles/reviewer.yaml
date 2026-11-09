@@ -1,0 +1,4 @@
+role_id: reviewer
+version: "0.1"
+name: Reviewer
+description: Reviews documentation and reports actionable findings.

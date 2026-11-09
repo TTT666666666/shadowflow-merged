@@ -19,14 +19,25 @@ from shadowflow.highlevel import (
     WorkflowTemplateSpec,
 )
 
-TEMPLATES_DIR = Path(__file__).resolve().parent.parent / "templates"
-LEGACY_TEMPLATE = (
-    Path(__file__).resolve().parent.parent
-    / "examples"
-    / "highlevel"
-    / "minimal-registry"
-    / "templates"
-    / "docs-review-template.yaml"
+# 合并仓库布局：templates/ 与 examples/ 已从 backend/python/ 提升到仓库根。
+# 仓库根优先、原路径兜底（standalone 子包布局下仍可运行）。
+_BACKEND_PYTHON = Path(__file__).resolve().parent.parent
+_REPO_ROOT = _BACKEND_PYTHON.parent.parent
+
+TEMPLATES_DIR = next(
+    (p for p in (_REPO_ROOT / "templates", _BACKEND_PYTHON / "templates") if p.is_dir()),
+    _REPO_ROOT / "templates",
+)
+LEGACY_TEMPLATE = next(
+    (
+        p
+        for p in (
+            _REPO_ROOT / "examples" / "highlevel" / "minimal-registry" / "templates" / "docs-review-template.yaml",
+            _BACKEND_PYTHON / "examples" / "highlevel" / "minimal-registry" / "templates" / "docs-review-template.yaml",
+        )
+        if p.exists()
+    ),
+    _REPO_ROOT / "examples" / "highlevel" / "minimal-registry" / "templates" / "docs-review-template.yaml",
 )
 
 SEED_TEMPLATES = [

@@ -24,3 +24,7 @@ backend/node/.shadowflow/
 .sf-token
 .e2e-fixtures/
 .workbuddy/memory/
+
+# Python 后端运行时数据（群 JSON、runtime.sqlite、tool schema 缓存）不入库
+backend/python/.shadowflow/
+backend/python/_data/

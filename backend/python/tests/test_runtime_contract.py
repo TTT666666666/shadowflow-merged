@@ -13,6 +13,7 @@ from fastapi.testclient import TestClient
 from shadowflow.runtime import (
     ChatMessageRequest,
     ChatSessionCreateRequest,
+    OFFICIAL_EXAMPLES_MANIFEST,
     ResumeRequest,
     RuntimeRequest,
     RuntimeService,
@@ -23,6 +24,8 @@ from shadowflow.runtime import (
 from shadowflow.server import app
 
 ROOT = Path(__file__).resolve().parents[1]
+# 官方示例目录以生产侧单源（official_examples.py）为准，避免 cwd 相对路径漂移
+EXAMPLES_DIR = OFFICIAL_EXAMPLES_MANIFEST.parent
 
 
 def make_local_test_dir(prefix: str) -> Path:
@@ -792,7 +795,7 @@ def test_cli_graph_command_exports_workflow_graph():
             "shadowflow.cli",
             "graph",
             "-w",
-            "examples/runtime-contract/docs-gap-review.yaml",
+            str(EXAMPLES_DIR / "docs-gap-review.yaml"),
         ],
         cwd=ROOT,
         capture_output=True,
@@ -863,7 +866,7 @@ def test_cli_runs_checkpoints_and_resume_commands_support_persisted_runtime_root
             "shadowflow.cli",
             "run",
             "-w",
-            "examples/runtime-contract/research-review-loop.yaml",
+            str(EXAMPLES_DIR / "research-review-loop.yaml"),
             "-i",
             '{"goal":"cli persisted resume"}',
             "--writeback",

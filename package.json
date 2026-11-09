@@ -9,6 +9,10 @@
     "dev": "node dev.mjs",
     "dev:web": "npm --prefix frontend run dev",
     "dev:server": "npm --prefix backend/node run dev",
-    "dev:python": "python -m uvicorn shadowflow.server:app --app-dir backend/python --host 127.0.0.1 --port 8000"
+    "dev:python": "node scripts/py-serve.mjs",
+    "contracts:gen": "python scripts/generate_ts_types.py",
+    "contracts:check": "python scripts/check_contracts.py",
+    "gate": "node scripts/pre-delivery.mjs",
+    "gate:fast": "node scripts/pre-delivery.mjs --fast"
   }
 }

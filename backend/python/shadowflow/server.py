@@ -493,11 +493,12 @@ async def _security_headers(request: Request, call_next):
 
 
 # 配置 CORS — origins 由环境变量控制，不允许 wildcard + credentials 同时存在
+# 默认来源从 config/ports.json 派生（port_config，2026-11-09 端口单一配置源）
+from shadowflow.port_config import DEFAULT_CORS_ORIGINS, PYTHON_PORT  # noqa: E402
+
 _ALLOWED_ORIGINS = [
     o.strip()
-    for o in os.environ.get(
-        "CORS_ORIGINS", "http://localhost:5173,http://localhost:3000,http://localhost:3007"
-    ).split(",")
+    for o in os.environ.get("CORS_ORIGINS", DEFAULT_CORS_ORIGINS).split(",")
     if o.strip()
 ]
 
@@ -1106,4 +1107,4 @@ async def get_template(template_id: str):
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="0.0.0.0", port=PYTHON_PORT)

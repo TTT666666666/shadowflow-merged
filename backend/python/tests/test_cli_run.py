@@ -3,6 +3,15 @@ import argparse
 import sys
 from pathlib import Path
 
+# 合并仓库布局：examples/ 已从 backend/python/ 提升到仓库根；仓库根优先、原路径兜底。
+_BACKEND_PYTHON = Path(__file__).resolve().parent.parent
+_REPO_ROOT = _BACKEND_PYTHON.parent.parent
+_EXAMPLES_DIR = next(
+    (p for p in (_REPO_ROOT / "examples", _BACKEND_PYTHON / "examples") if (p / "runtime-contract").is_dir()),
+    _REPO_ROOT / "examples",
+)
+_CLI_GENERIC_LOCAL = str(_EXAMPLES_DIR / "runtime-contract" / "cli-generic-local.yaml")
+
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -81,7 +90,7 @@ class TestEndToEnd:
         import asyncio
         from shadowflow.cli import run_workflow
 
-        yaml_path = str(Path(__file__).parent.parent / "examples" / "runtime-contract" / "cli-generic-local.yaml")
+        yaml_path = _CLI_GENERIC_LOCAL
         result_json = None
 
         async def _run():
@@ -102,7 +111,7 @@ class TestEndToEnd:
         import asyncio
         from shadowflow.cli import run_workflow
 
-        yaml_path = str(Path(__file__).parent.parent / "examples" / "runtime-contract" / "cli-generic-local.yaml")
+        yaml_path = _CLI_GENERIC_LOCAL
 
         async def _run():
             import json, io

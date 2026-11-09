@@ -8,6 +8,7 @@ import yaml
 
 from shadowflow.runtime import RuntimeRequest, RuntimeService, WorkflowDefinition
 from shadowflow.runtime.executors import ApiExecutor, CliExecutor
+from shadowflow.runtime.official_examples import OFFICIAL_EXAMPLES_MANIFEST
 
 
 def test_cli_executor_runs_generic_subprocess_and_maps_result():
@@ -380,7 +381,8 @@ def test_cli_executor_rejects_invalid_timeout():
     ],
 )
 def test_executor_example_workflows_validate(workflow_path):
-    example_path = Path(workflow_path)
+    # 示例文件以生产侧单源（official_examples.py）定位，workflow_path 只取文件名
+    example_path = OFFICIAL_EXAMPLES_MANIFEST.parent / Path(workflow_path).name
     payload = yaml.safe_load(example_path.read_text(encoding="utf-8"))
     workflow = WorkflowDefinition.model_validate(payload)
     assert workflow.workflow_id

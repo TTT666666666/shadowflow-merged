@@ -10,7 +10,9 @@
     "build": "tsc",
     "start:prod": "node dist/index.js",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "db:migrate": "tsx src/storage/migrate-cli.ts",
+    "db:migrate:apply": "tsx src/storage/migrate-cli.ts --apply"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.99.0",

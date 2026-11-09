@@ -1,0 +1,103 @@
+name: CI
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PYTHON_VERSION: '3.11'
+  NODE_VERSION: '22'
+
+jobs:
+  # ── 1. 契约单一源校验（最快，失败最早暴露） ───────────────────────────────
+  contracts:
+    name: contracts (drift + secret scan)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: backend/python/pyproject.toml
+      - name: Install minimal deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install "pydantic>=2" "pyyaml>=6"
+      - name: Contract check
+        # 失败即 fail：TS 契约必须与 Python Pydantic 源逐字节一致
+        run: python scripts/check_contracts.py
+
+  # ── 2. Python 测试 ────────────────────────────────────────────────────────
+  test-python:
+    name: test-python (pytest)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: backend/python/pyproject.toml
+      - name: Install
+        # mcp 必须 <2：mcp 2.x 移除了 Server.list_tools()，会打挂 mcp_servers 簇。
+        # pyproject 里已钉 mcp>=1.0,<2，这里不再重复约束。
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e "./backend/python[server,memory,dev,mcp-servers]"
+      - name: pytest
+        working-directory: backend/python
+        run: python -m pytest -q --tb=short
+
+  # ── 3. Node 网关 ──────────────────────────────────────────────────────────
+  test-node:
+    name: test-node (tsc + vitest)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: backend/node/package-lock.json
+      - name: Install
+        working-directory: backend/node
+        run: npm ci
+      - name: Typecheck
+        working-directory: backend/node
+        # TODO(基线): craft-profit / craft-posts 域有历史 TS 错误（TS2305/2339/2354…），
+        # 与架构治理无关，正在逐批修复。修完把 continue-on-error 删掉即为强制门。
+        continue-on-error: true
+        run: npx tsc --noEmit
+      - name: Vitest
+        working-directory: backend/node
+        run: npm test
+
+  # ── 4. 前端 ───────────────────────────────────────────────────────────────
+  test-web:
+    name: test-web (tsc + vitest + build)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install
+        working-directory: frontend
+        run: npm ci
+      - name: Typecheck
+        working-directory: frontend
+        run: npx tsc --noEmit
+      - name: Vitest
+        working-directory: frontend
+        run: npx vitest run
+      - name: Build
+        working-directory: frontend
+        run: npx vite build

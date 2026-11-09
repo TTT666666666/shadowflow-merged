@@ -11,7 +11,19 @@ from shadowflow.runtime import WorkflowDefinition
 
 
 ROOT = Path(__file__).resolve().parents[1]
-EXAMPLE_REGISTRY_ROOT = ROOT / "examples" / "highlevel" / "minimal-registry"
+# 合并仓库布局：examples/ 已从 backend/python/ 提升到仓库根；仓库根优先、原路径兜底。
+_REPO_ROOT = ROOT.parent.parent
+EXAMPLE_REGISTRY_ROOT = next(
+    (
+        p
+        for p in (
+            _REPO_ROOT / "examples" / "highlevel" / "minimal-registry",
+            ROOT / "examples" / "highlevel" / "minimal-registry",
+        )
+        if p.is_dir()
+    ),
+    _REPO_ROOT / "examples" / "highlevel" / "minimal-registry",
+)
 
 
 def _write_yaml(path: Path, payload: dict) -> None:

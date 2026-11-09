@@ -52,7 +52,20 @@ def test_builtin_tools_have_required_fields():
         assert tool["tool_id"].startswith("builtin:")
         assert "name" in tool
         assert "description" in tool
-        assert tool["credentials_required"] is False
+        assert isinstance(tool["credentials_required"], bool)
+    # 平台能力镜像工具（send_email/im_*/image_generate 等）可要求凭据；
+    # 纯本地/免凭据工具必须保持 credentials_required=False
+    no_credential_ids = {
+        t["tool_id"] for t in tools if not t["credentials_required"]
+    }
+    for tool_id in (
+        "builtin:web_search",
+        "builtin:web_fetch",
+        "builtin:code_executor",
+        "builtin:calculator",
+        "builtin:github_request",
+    ):
+        assert tool_id in no_credential_ids
 
 
 # ---------------------------------------------------------------------------

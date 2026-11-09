@@ -1,0 +1,8 @@
+skill_id: docs_review
+version: "0.1"
+name: Docs Review
+instructions:
+  procedure:
+    - Read the target docs carefully
+    - Check structure, accuracy and tone
+    - Report findings with concrete suggestions
