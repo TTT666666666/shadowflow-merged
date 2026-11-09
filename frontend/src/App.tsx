@@ -1,5 +1,5 @@
 import { FormEvent, useEffect, useRef, useState } from "react";
-import ProductApp from "../ProductApp";
+import ProductApp from "./product-app/ProductApp";
 import AuthModal from "./AuthModal";
 import BuyView from "./BuyView";
 import PricingSection from "./PricingSection";

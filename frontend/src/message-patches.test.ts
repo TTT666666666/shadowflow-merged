@@ -1,13 +1,11 @@
 /**
- * message-patches.test.ts — MessagePatch reducer 最小用例（node:test）。
+ * message-patches.test.ts — MessagePatch reducer 用例（vitest）。
  *
- * 运行（零依赖，Node ≥ 22.6 自带类型剥离）：
- *   node --experimental-strip-types --test src/message-patches.test.ts
- * 或（vitest 可用时）：
- *   npx vitest run src
+ * 运行：
+ *   npm test（= npx vitest run）
  */
 
-import { test } from "node:test";
+import { test } from "vitest";
 import assert from "node:assert/strict";
 import {
   applyPatch,

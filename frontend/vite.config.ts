@@ -1,3 +1,4 @@
+/// <reference types="vitest/config" />
 import { defineConfig, type HtmlTagDescriptor, type Plugin } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
@@ -5,6 +6,20 @@ import fs from "node:fs";
 import path from "node:path";
 
 import siteConfiguration from "./.figma/make/site.json";
+
+// 端口单一配置源 config/ports.json（2026-11-09，docs/新架构蓝图-v2.md §1.2）：
+// dev 端口与 API 代理目标不再硬编码；env PORT 仍可覆盖 web 端口（部署场景）。
+function loadRepoPorts(): { web: number; gateway: number } {
+  try {
+    const raw = fs.readFileSync(path.resolve(__dirname, "..", "config", "ports.json"), "utf8");
+    const parsed = JSON.parse(raw);
+    return { web: Number(parsed.web) || 8443, gateway: Number(parsed.gateway) || 8002 };
+  } catch {
+    return { web: 8443, gateway: 8002 };
+  }
+}
+const REPO_PORTS = loadRepoPorts();
+const GATEWAY_ORIGIN = `http://127.0.0.1:${REPO_PORTS.gateway}`;
 
 /**
  * sfServerKeepAlive — 公网隧道稳定性（2026-11-08）。
@@ -61,16 +76,24 @@ export default defineConfig(({ mode }) => {
         "@": path.resolve(__dirname, "./src"),
       },
     },
+    // vitest 测试配置段（2026-11-09 会话07）：jsdom 环境 + @testing-library/react，
+    // 用例文件统一放 src/**/*.test.{ts,tsx}（npm test = vitest run）。
+    test: {
+      environment: "jsdom",
+      include: ["src/**/*.test.{ts,tsx}"],
+      restoreMocks: true,
+      unstubGlobals: true,
+    },
     server: {
       host: process.env.FIGMA_DEV_SERVER_HOST || "0.0.0.0",
-      port: parseInt(process.env.PORT || "8443"),
+      port: parseInt(process.env.PORT || String(REPO_PORTS.web)),
       strictPort: true,
       // 关闭 host 白名单：允许任意域名（如隧道域名）访问
       allowedHosts: true,
-      // 合并仓库：把旧后端 API 直接代理进来（Node 网关 :8002）
+      // 合并仓库：把旧后端 API 直接代理进来（Node 网关，端口见 config/ports.json）
       proxy: {
-        "/api": { target: "http://127.0.0.1:8002", changeOrigin: true },
-        "/projects": { target: "http://127.0.0.1:8002", changeOrigin: true },
+        "/api": { target: GATEWAY_ORIGIN, changeOrigin: true },
+        "/projects": { target: GATEWAY_ORIGIN, changeOrigin: true },
       },
       watch: {
         ignored: ["**/.figma/**"],
@@ -78,7 +101,7 @@ export default defineConfig(({ mode }) => {
     },
     preview: {
       host: process.env.FIGMA_DEV_SERVER_HOST || "0.0.0.0",
-      port: parseInt(process.env.PORT || "8443"),
+      port: parseInt(process.env.PORT || String(REPO_PORTS.web)),
     },
   };
 });

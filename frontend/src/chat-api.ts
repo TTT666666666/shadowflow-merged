@@ -5,6 +5,11 @@
  *   - TimelineMessage：时间线消息判别联合（kind 分派渲染）
  *   - MessagePatch：长驻消息的流式增量补丁（applyPatch 见 message-patches.ts）
  *
+ * ★ 契约单源（2026-11-09，docs/新架构蓝图-v2.md §2）：下方「基础类型」是
+ *   lib/contracts.ts 的子集，**只许跟随其演进，不许私自改型**；新增/改名由
+ *   `npm run contracts:check`（scripts/check_contracts.py 名称级校验）拦截。
+ *   workflow/run 域的运行时契约在 ./generated/sf-contracts.ts（自动生成，勿手改）。
+ *
  * 传输层：
  *   - apiFetch：统一加 Authorization: Bearer <token>（src/auth.ts 的
  *     getAuthSnapshot），401 抛 ApiError 并通知全局处理器（打开 AuthModal）
@@ -631,7 +636,9 @@ export async function createMemo(input: {
     method: "POST",
     body: JSON.stringify(input),
   });
-  return (Array.isArray(json) ? json[0] : (json?.data ?? json)) as SfMemo;
+  // 响应可能是 {data:…} 包装或裸对象（历史双形态）；SfMemo 无 data 字段，
+  // 用结构化收窄取包装层，运行时行为与旧写 json?.data 等价。
+  return (Array.isArray(json) ? json[0] : ("data" in json ? json.data ?? json : json)) as SfMemo;
 }
 
 export async function updateMemo(
@@ -642,7 +649,7 @@ export async function updateMemo(
     `/api/memos/${encodeURIComponent(memoId)}`,
     { method: "PATCH", body: JSON.stringify(patch) },
   );
-  return (Array.isArray(json) ? json[0] : (json?.data ?? json)) as SfMemo;
+  return (Array.isArray(json) ? json[0] : ("data" in json ? json.data ?? json : json)) as SfMemo;
 }
 
 export async function deleteMemo(memoId: string): Promise<void> {
