@@ -31,3 +31,6 @@ backend/python/_data/
 
 # 用户/测试导入的自定义流程模板（运行时目录，seed 模板在 templates/*.yaml）
 templates/custom/
+
+# 服务以仓库根为 cwd 启动时写的运行时数据（tool schema 缓存等）
+/_data/
