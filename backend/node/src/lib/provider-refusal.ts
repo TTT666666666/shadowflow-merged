@@ -16,6 +16,7 @@ const RAW_TAIL_MAX = 160;
 
 /** 错误分类（对齐 OpenBot 的 refusal taxonomy；宽松匹配，认不出回落 unknown）。 */
 export type ModelErrorKind =
+  | 'cli_missing'
   | 'key_missing'
   | 'rate_limited'
   | 'model_unknown'
@@ -34,6 +35,13 @@ interface Rule {
 
 /** 顺序即优先级：密钥/限流等具体信号先于泛化的网络/5xx。 */
 const RULES: Rule[] = [
+  {
+    // 2026-11-09 本地补全：CLI 拉起失败（未安装/不在 PATH，spawn error → 退出码 -1）
+    // 不是供应商故障，提示去配置 BYOK，而不是让用户「稍后重试」干等。
+    kind: 'cli_missing',
+    re: /CLI_NOT_INSTALLED|退出码\s*-1\b|ENOENT|command not found|is not recognized|not installed/i,
+    human: '模型执行器不可用（本机缺少对应的模型 CLI 或 API Key）：请到「设置 → BYOK」填入 API Key 后重试',
+  },
   {
     kind: 'key_missing',
     re: /api[ _-]?key|no_api_key|unauthorized|401|authentication|credential/i,

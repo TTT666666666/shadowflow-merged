@@ -5217,3 +5217,863 @@
   opacity: 0.6;
   cursor: default;
 }
+
+/* ============================================================
+   本地补全（2026-11-09）：上游 product-app.css 缺失以下功能区样式——
+   商品·博文卡片 / 商品售卖与弹窗 / 订单履约 / 工作备忘 / 连接器 chip。
+   按现有设计语言（米色纸质面板 #fffdf9、描边 #ded7cc、圆角 12px、
+   深色主按钮 #2f2e2b、橙色 #ff5e3a 小点缀）补齐，仅补空白、不改已有规则。
+   ============================================================ */
+@layer components {
+  /* ---------- 商品 · 博文卡片 ---------- */
+  .sf-craft-cards {
+    border: 1px solid #ded7cc;
+    border-radius: 12px;
+    background: #fffdf9;
+    padding: 15px 16px;
+  }
+  .sf-craft-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .sf-craft-group {
+    margin: 14px 0 8px;
+    color: #8c867f;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+  }
+  .sf-craft-empty {
+    border: 1px dashed #ded7cc;
+    border-radius: 10px;
+    padding: 18px 14px;
+    color: #99938c;
+    font-size: 12.5px;
+    text-align: center;
+  }
+  .sf-craft-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+    gap: 10px;
+  }
+  .sf-craft-card {
+    display: flex;
+    gap: 10px;
+    border: 1px solid #e6e0d6;
+    border-radius: 10px;
+    background: #fdfbf6;
+    padding: 10px;
+    min-width: 0;
+  }
+  .sf-craft-thumb {
+    flex: none;
+    width: 64px;
+    height: 64px;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #f1ede5;
+    display: grid;
+    place-items: center;
+    color: #b3ada4;
+  }
+  .sf-craft-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  .sf-craft-info {
+    min-width: 0;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .sf-craft-info > strong {
+    font-size: 13px;
+    color: #3c3833;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .sf-craft-meta {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .sf-craft-money {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 4px 8px;
+    margin-top: auto;
+  }
+  .sf-craft-money em {
+    font-style: normal;
+    color: #99938c;
+    font-size: 11px;
+  }
+  .sf-craft-money b {
+    color: #3c3833;
+    font-size: 13px;
+  }
+  .sf-craft-money small {
+    color: #b3ada4;
+    font-size: 11px;
+  }
+  /* 涨红跌绿（金融约定） */
+  .sf-craft-delta {
+    font-size: 11px;
+    font-weight: 700;
+  }
+  .sf-craft-delta.up {
+    color: #dc2626;
+  }
+  .sf-craft-delta.down {
+    color: #16a34a;
+  }
+
+  /* ---------- 工作备忘 ---------- */
+  .sf-memo-form {
+    display: flex;
+    align-items: stretch;
+    gap: 8px;
+    margin: 12px 0;
+    flex-wrap: wrap;
+  }
+  .sf-memo-form input {
+    border: 1px solid #ded7cc;
+    border-radius: 10px;
+    background: #fffdf9;
+    color: #3c3833;
+    font: inherit;
+    font-size: 13px;
+    padding: 9px 12px;
+    min-width: 0;
+  }
+  .sf-memo-form input:focus {
+    outline: none;
+    border-color: #ff5e3a;
+    box-shadow: 0 0 0 3px rgba(255, 94, 58, 0.12);
+  }
+  .sf-memo-form input:disabled {
+    opacity: 0.6;
+  }
+  .sf-memo-form input[type="date"] {
+    width: 150px;
+  }
+  .sf-memo-form input::placeholder {
+    color: #b3ada4;
+  }
+  .sf-memo-form > input:nth-of-type(1) {
+    flex: 1;
+  }
+  .sf-memo-form > input:nth-of-type(3) {
+    flex: 1.2;
+  }
+  .sf-memo-form button[type="submit"] {
+    border: none;
+    border-radius: 10px;
+    background: #2f2e2b;
+    color: #fffdf9;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 9px 18px;
+    cursor: pointer;
+  }
+  .sf-memo-form button[type="submit"]:hover:not(:disabled) {
+    background: #171614;
+  }
+  .sf-memo-form button[type="submit"]:disabled {
+    opacity: 0.5;
+    cursor: default;
+  }
+  .sf-memo-stats {
+    color: #99938c;
+    font-size: 12px;
+    margin: 2px 0 10px;
+  }
+  .sf-memo-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .sf-memo-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    border: 1px solid #ded7cc;
+    border-radius: 10px;
+    background: #fffdf9;
+    padding: 11px 12px;
+  }
+  .sf-memo-item.done {
+    opacity: 0.62;
+  }
+  .sf-memo-item.done .sf-memo-head h3 {
+    text-decoration: line-through;
+  }
+  .sf-memo-check {
+    flex: none;
+    width: 18px;
+    height: 18px;
+    margin-top: 2px;
+    border: 1.5px solid #c9c2b7;
+    border-radius: 6px;
+    background: #fffdf9;
+    color: #16a34a;
+    font-size: 12px;
+    line-height: 1;
+    cursor: pointer;
+    display: grid;
+    place-items: center;
+  }
+  .sf-memo-check:hover {
+    border-color: #ff5e3a;
+  }
+  .sf-memo-item.done .sf-memo-check {
+    border-color: #16a34a;
+    background: #e4f5ef;
+  }
+  .sf-memo-main {
+    flex: 1;
+    min-width: 0;
+  }
+  .sf-memo-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .sf-memo-head h3 {
+    margin: 0;
+    font-size: 13.5px;
+    color: #3c3833;
+    font-weight: 600;
+  }
+  .sf-memo-main > p {
+    margin: 4px 0 0;
+    color: #8c867f;
+    font-size: 12px;
+    white-space: pre-wrap;
+  }
+  .sf-memo-due {
+    border-radius: 999px;
+    padding: 1px 8px;
+    font-size: 11px;
+    background: #ece7de;
+    color: #8c867f;
+    white-space: nowrap;
+  }
+  .sf-memo-due.over {
+    background: #fdeaea;
+    color: #dc2626;
+  }
+  .sf-memo-due.today {
+    background: #ffe9e2;
+    color: #ff5e3a;
+    font-weight: 700;
+  }
+  .sf-memo-due.future {
+    background: #ece7de;
+    color: #8c867f;
+  }
+  .sf-memo-actions {
+    flex: none;
+    display: flex;
+    gap: 4px;
+  }
+  .sf-memo-actions button {
+    border: none;
+    background: none;
+    color: #b3ada4;
+    padding: 4px;
+    border-radius: 6px;
+    cursor: pointer;
+    display: grid;
+    place-items: center;
+  }
+  .sf-memo-actions button:hover {
+    background: #f1ede5;
+    color: #3c3833;
+  }
+
+  /* ---------- 订单履约 ---------- */
+  .sf-orders {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .sf-orders-kpi {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 10px;
+  }
+  .sf-order-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .sf-order-filters button {
+    border: 1px solid #ded7cc;
+    border-radius: 999px;
+    background: #fffdf9;
+    color: #8c867f;
+    font: inherit;
+    font-size: 12px;
+    padding: 5px 12px;
+    cursor: pointer;
+  }
+  .sf-order-filters button:hover {
+    border-color: #c9c2b7;
+    color: #3c3833;
+  }
+  .sf-order-filters button.active {
+    background: #2f2e2b;
+    border-color: #2f2e2b;
+    color: #fffdf9;
+  }
+  .sf-order-empty {
+    border: 1px dashed #ded7cc;
+    border-radius: 10px;
+    padding: 22px 14px;
+    color: #99938c;
+    font-size: 12.5px;
+    text-align: center;
+    margin: 0;
+  }
+  .sf-order-card {
+    border: 1px solid #ded7cc;
+    border-radius: 12px;
+    background: #fffdf9;
+    padding: 13px 15px;
+  }
+  .sf-order-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .sf-order-top strong {
+    font-size: 14px;
+    color: #3c3833;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .sf-order-price {
+    margin: 7px 0 0;
+    color: #8c867f;
+    font-size: 12.5px;
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .sf-order-total {
+    color: #3c3833;
+    font-size: 13.5px;
+    margin-left: auto;
+  }
+  .sf-order-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 12px;
+    margin: 6px 0 0;
+    color: #b3ada4;
+    font-size: 11.5px;
+  }
+  .sf-order-profit {
+    color: #16a34a;
+    font-weight: 600;
+  }
+  .sf-order-row {
+    display: flex;
+    gap: 8px;
+    margin: 7px 0 0;
+    font-size: 12.5px;
+    color: #5c574f;
+    word-break: break-all;
+  }
+  .sf-order-row em {
+    flex: none;
+    font-style: normal;
+    color: #b3ada4;
+    width: 34px;
+  }
+  .sf-order-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 11px;
+    justify-content: flex-end;
+  }
+  .sf-order-primary,
+  .sf-order-danger,
+  .sf-order-cancel,
+  .sf-order-actions .sf-biz-act {
+    border: none;
+    border-radius: 9px;
+    font: inherit;
+    font-size: 12.5px;
+    padding: 7px 15px;
+    cursor: pointer;
+  }
+  .sf-order-primary {
+    background: #2f2e2b;
+    color: #fffdf9;
+    font-weight: 600;
+  }
+  .sf-order-primary:hover {
+    background: #171614;
+  }
+  .sf-order-danger {
+    background: #dc2626;
+    color: #fff;
+    font-weight: 600;
+  }
+  .sf-order-danger:hover {
+    background: #b91c1c;
+  }
+  .sf-order-cancel,
+  .sf-order-actions .sf-biz-act {
+    background: none;
+    border: 1px solid #ded7cc;
+    color: #8c867f;
+  }
+  .sf-order-cancel:hover,
+  .sf-order-actions .sf-biz-act:hover {
+    border-color: #c9c2b7;
+    color: #3c3833;
+  }
+
+  /* ---------- 商品售卖（列表 + 弹窗） ---------- */
+  .sf-shop-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin: 0 0 10px;
+  }
+  .sf-shop-add {
+    border: 1px solid #ded7cc;
+    border-radius: 9px;
+    background: #fffdf9;
+    color: #3c3833;
+    font: inherit;
+    font-size: 12.5px;
+    font-weight: 600;
+    padding: 7px 13px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .sf-shop-add:hover {
+    border-color: #2f2e2b;
+  }
+  .sf-shop-empty {
+    border: 1px dashed #ded7cc;
+    border-radius: 10px;
+    padding: 22px 14px;
+    color: #99938c;
+    font-size: 12.5px;
+    text-align: center;
+  }
+  .sf-shop-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 12px;
+  }
+  .sf-shop-card {
+    border: 1px solid #ded7cc;
+    border-radius: 12px;
+    background: #fffdf9;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  .sf-shop-img {
+    aspect-ratio: 4 / 3;
+    background: #f1ede5;
+    display: grid;
+    place-items: center;
+    color: #b3ada4;
+  }
+  .sf-shop-img img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  .sf-shop-img-broken {
+    background: repeating-linear-gradient(45deg, #f1ede5, #f1ede5 8px, #e9e3d8 8px, #e9e3d8 16px);
+  }
+  .sf-shop-info {
+    padding: 10px 12px 0;
+    min-width: 0;
+  }
+  .sf-shop-info > strong {
+    display: block;
+    font-size: 13.5px;
+    color: #3c3833;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .sf-shop-info > span {
+    display: block;
+    margin-top: 3px;
+    color: #99938c;
+    font-size: 12px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .sf-shop-price {
+    margin: 7px 0 0;
+    display: flex;
+    align-items: baseline;
+    gap: 7px;
+  }
+  .sf-shop-price b {
+    color: #ff5e3a;
+    font-size: 16px;
+  }
+  .sf-shop-price s {
+    color: #b3ada4;
+    font-size: 11.5px;
+  }
+  .sf-shop-foot {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 9px 12px 11px;
+    margin-top: auto;
+    flex-wrap: wrap;
+  }
+  .sf-shop-link {
+    flex: 1;
+    min-width: 0;
+    color: #8c867f;
+    font-size: 11.5px;
+    text-decoration: none;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .sf-shop-link:hover {
+    color: #ff5e3a;
+  }
+  .sf-shop-pay-hint {
+    color: #b3ada4;
+    font-size: 11px;
+  }
+  .sf-shop-copy {
+    border: 1px solid #ded7cc;
+    border-radius: 8px;
+    background: none;
+    color: #8c867f;
+    font: inherit;
+    font-size: 11.5px;
+    padding: 4px 9px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .sf-shop-copy:hover {
+    border-color: #c9c2b7;
+    color: #3c3833;
+  }
+  .sf-shop-del {
+    border: none;
+    background: none;
+    color: #dc2626;
+    font: inherit;
+    font-size: 11.5px;
+    padding: 4px 6px;
+    cursor: pointer;
+    border-radius: 6px;
+  }
+  .sf-shop-del:hover {
+    background: #fdeaea;
+  }
+  .sf-shop-del-ask {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11.5px;
+    color: #dc2626;
+  }
+  .sf-shop-del-yes,
+  .sf-shop-del-no {
+    border: none;
+    border-radius: 7px;
+    font: inherit;
+    font-size: 11.5px;
+    padding: 4px 9px;
+    cursor: pointer;
+  }
+  .sf-shop-del-yes {
+    background: #dc2626;
+    color: #fff;
+  }
+  .sf-shop-del-no {
+    background: none;
+    border: 1px solid #ded7cc;
+    color: #8c867f;
+  }
+
+  /* ---------- 商品/发货弹窗 ---------- */
+  .sf-shop-mask {
+    position: fixed;
+    inset: 0;
+    z-index: 80;
+    background: rgba(23, 22, 45, 0.42);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+  .sf-shop-modal {
+    width: 430px;
+    max-width: 100%;
+    max-height: 88vh;
+    overflow: auto;
+    border-radius: 14px;
+    background: #faf8f3;
+    border: 1px solid #ded7cc;
+    box-shadow: 0 18px 48px rgba(23, 22, 45, 0.22);
+  }
+  .sf-shop-modal-wide {
+    width: 560px;
+  }
+  .sf-shop-modal > header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 18px 0;
+  }
+  .sf-shop-modal > header h3 {
+    margin: 0;
+    font-size: 15px;
+    color: #17162d;
+  }
+  .sf-shop-close {
+    border: none;
+    background: none;
+    color: #b3ada4;
+    padding: 4px;
+    border-radius: 7px;
+    cursor: pointer;
+    display: grid;
+    place-items: center;
+  }
+  .sf-shop-close:hover {
+    background: #f1ede5;
+    color: #3c3833;
+  }
+  .sf-shop-modal-body {
+    padding: 14px 18px 4px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .sf-shop-fields {
+    display: flex;
+    flex-direction: column;
+    gap: 11px;
+  }
+  .sf-shop-fields label {
+    display: block;
+    min-width: 0;
+  }
+  .sf-shop-fields label > span {
+    display: block;
+    margin-bottom: 5px;
+    color: #8c867f;
+    font-size: 12px;
+  }
+  .sf-shop-fields input,
+  .sf-shop-fields select,
+  .sf-shop-fields textarea {
+    width: 100%;
+    border: 1px solid #ded7cc;
+    border-radius: 9px;
+    background: #fffdf9;
+    color: #3c3833;
+    font: inherit;
+    font-size: 13px;
+    padding: 8px 11px;
+  }
+  .sf-shop-fields textarea {
+    min-height: 74px;
+    resize: vertical;
+  }
+  .sf-shop-fields input:focus,
+  .sf-shop-fields select:focus,
+  .sf-shop-fields textarea:focus {
+    outline: none;
+    border-color: #ff5e3a;
+    box-shadow: 0 0 0 3px rgba(255, 94, 58, 0.12);
+  }
+  .sf-shop-fields-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+  }
+  .sf-shop-margin-tip {
+    margin: 0;
+    border-radius: 8px;
+    background: #f1ede5;
+    color: #8c867f;
+    font-size: 12px;
+    padding: 8px 11px;
+  }
+  .sf-shop-margin-tip strong {
+    color: #3c3833;
+  }
+  .sf-shop-modal-err {
+    margin: 0;
+    color: #dc2626;
+    font-size: 12px;
+  }
+  .sf-shop-modal > form > footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    padding: 12px 18px 16px;
+  }
+  .sf-shop-modal > form > footer button {
+    border: none;
+    border-radius: 9px;
+    font: inherit;
+    font-size: 13px;
+    padding: 8px 17px;
+    cursor: pointer;
+  }
+  .sf-shop-modal > form > footer button:not(.sf-shop-save) {
+    background: none;
+    border: 1px solid #ded7cc;
+    color: #8c867f;
+  }
+  .sf-shop-save {
+    background: #2f2e2b !important;
+    color: #fffdf9;
+    font-weight: 600;
+  }
+  .sf-shop-save:hover:not(:disabled) {
+    background: #171614 !important;
+  }
+  .sf-shop-save:disabled {
+    opacity: 0.6;
+    cursor: default;
+  }
+  .sf-shop-pick {
+    display: block;
+  }
+  .sf-shop-pick-title {
+    display: block;
+    margin-bottom: 6px;
+    color: #8c867f;
+    font-size: 12px;
+  }
+  .sf-shop-imgs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .sf-shop-img-tile {
+    position: relative;
+    width: 84px;
+    height: 84px;
+    border-radius: 9px;
+    overflow: hidden;
+    border: 1px solid #ded7cc;
+    background: #f1ede5;
+  }
+  .sf-shop-img-tile img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  .sf-shop-cover {
+    position: absolute;
+    left: 4px;
+    bottom: 4px;
+    font-style: normal;
+    border-radius: 6px;
+    background: rgba(255, 94, 58, 0.92);
+    color: #fff;
+    font-size: 10px;
+    padding: 1px 6px;
+  }
+  .sf-shop-img-x {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 18px;
+    height: 18px;
+    border: none;
+    border-radius: 50%;
+    background: rgba(23, 22, 45, 0.55);
+    color: #fff;
+    font-size: 11px;
+    line-height: 1;
+    cursor: pointer;
+    display: grid;
+    place-items: center;
+    padding: 0;
+  }
+  .sf-shop-img-x:hover {
+    background: rgba(23, 22, 45, 0.8);
+  }
+  .sf-shop-img-add {
+    width: 84px;
+    height: 84px;
+    border: 1px dashed #c9c2b7;
+    border-radius: 9px;
+    background: none;
+    color: #b3ada4;
+    cursor: pointer;
+    display: grid;
+    place-items: center;
+  }
+  .sf-shop-img-add:hover {
+    border-color: #ff5e3a;
+    color: #ff5e3a;
+  }
+  .sf-ship-product {
+    margin: 0;
+    border-radius: 8px;
+    background: #f1ede5;
+    color: #5c574f;
+    font-size: 12.5px;
+    padding: 9px 11px;
+  }
+
+  /* ---------- 连接器 chip ---------- */
+  .sf-conn-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    border: 1px solid #ffd2c4;
+    border-radius: 999px;
+    background: #ffe9e2;
+    color: #d1452b;
+    font: inherit;
+    font-size: 11.5px;
+    padding: 3px 10px;
+    cursor: pointer;
+  }
+  .sf-conn-chip:hover {
+    border-color: #ff5e3a;
+  }
+}
