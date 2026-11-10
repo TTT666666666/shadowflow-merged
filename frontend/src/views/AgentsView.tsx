@@ -29,6 +29,7 @@ import {
   sfFetch,
   SF_PALETTE,
 } from "./shared";
+import { useI18n } from "../i18n";
 
 interface SfApproval {
   approval_id: string;
@@ -171,6 +172,7 @@ function SfDagPanel({ team, matrix }: { team: SfTeamDag; matrix: PolicyMatrix })
     () => dagLayers(team.edges, nodes.map((n) => n.id)),
     [team],
   );
+  const { t } = useI18n();
 
   const NW = 150;
   const NH = 44;
@@ -209,11 +211,12 @@ function SfDagPanel({ team, matrix }: { team: SfTeamDag; matrix: PolicyMatrix })
         stroke: POLICY_COLORS[p],
         w: p === "deny" ? 2.4 : 1.9,
         dash: !e.mode || e.mode === "direct" ? undefined : "5 4",
-        label: POLICY_LABELS[p],
+        label: t(POLICY_LABELS[p]),
       };
     }
-    if (e.mode === "approve") return { stroke: "#d97706", w: 1.6, dash: "5 4", label: "审批" };
-    if (e.mode === "conditional") return { stroke: "#0891b2", w: 1.6, dash: "5 4", label: "回炉" };
+    if (e.mode === "approve") return { stroke: "#d97706", w: 1.6, dash: "5 4", label: t("审批") };
+    if (e.mode === "conditional")
+      return { stroke: "#0891b2", w: 1.6, dash: "5 4", label: t("驳回回炉") };
     return { stroke: "#c9c5ba", w: 1.6 };
   };
 
@@ -225,11 +228,11 @@ function SfDagPanel({ team, matrix }: { team: SfTeamDag; matrix: PolicyMatrix })
     <div className="sf-teamops-panel">
       <div className="sf-teamops-head">
         <GitBranch size={14} />
-        <h3>工作流 DAG</h3>
-        <span className="sf-teamops-name">{team.name}</span>
+        <h3>{t("工作流 DAG")}</h3>
+        <span className="sf-teamops-name">{t(team.name)}</span>
       </div>
       <p className="sf-teamops-sub">
-        交接边随协作策略染色 · 虚线为审批门 / 驳回回炉边
+        {t("交接边随协作策略染色 · 虚线为审批门 / 驳回回炉边")}
       </p>
       <div className="sf-dag-scroll">
         <svg viewBox={`0 0 ${W} ${H}`} width="100%" style={{ display: "block", minWidth: Math.min(W, 560) }}>
@@ -314,10 +317,10 @@ function SfDagPanel({ team, matrix }: { team: SfTeamDag; matrix: PolicyMatrix })
                   fontWeight={700}
                   fill="#fff"
                 >
-                  {(n.title || n.id).slice(0, 1)}
+                  {t(n.title || n.id).slice(0, 1)}
                 </text>
                 <text x={41} y={NH / 2 + 3.5} fontSize={13} fontWeight={650} fill="#17162d">
-                  {n.title || n.id}
+                  {t(n.title || n.id)}
                 </text>
               </g>
             );
@@ -325,12 +328,12 @@ function SfDagPanel({ team, matrix }: { team: SfTeamDag; matrix: PolicyMatrix })
         </svg>
       </div>
       <div className="sf-dag-legend">
-        <span><i style={{ borderColor: "#c9c5ba" }} />direct 交接</span>
-        <span><i style={{ borderColor: "#d97706", borderStyle: "dashed" }} />approve 审批门</span>
-        <span><i style={{ borderColor: "#0891b2", borderStyle: "dashed" }} />驳回回炉</span>
-        <span><i style={{ borderColor: "#16a34a" }} />允许</span>
-        <span><i style={{ borderColor: "#d97706" }} />警告</span>
-        <span><i style={{ borderColor: "#dc2626" }} />拒绝</span>
+        <span><i style={{ borderColor: "#c9c5ba" }} />{t("direct 交接")}</span>
+        <span><i style={{ borderColor: "#d97706", borderStyle: "dashed" }} />{t("approve 审批门")}</span>
+        <span><i style={{ borderColor: "#0891b2", borderStyle: "dashed" }} />{t("驳回回炉")}</span>
+        <span><i style={{ borderColor: "#16a34a" }} />{t("允许")}</span>
+        <span><i style={{ borderColor: "#d97706" }} />{t("警告")}</span>
+        <span><i style={{ borderColor: "#dc2626" }} />{t("拒绝")}</span>
       </div>
     </div>
   );
@@ -358,29 +361,32 @@ function SfPolicyPanel({
     agents.find((a) => a.id === id || a.initials === id || (!!title && a.name === title))?.color ??
     SF_PALETTE[index % SF_PALETTE.length];
   const cellOf = (a: string, b: string): PolicyCellState | null => matrix[a]?.[b] ?? null;
+  const { t, tn } = useI18n();
   return (
     <div className="sf-teamops-panel">
       <div className="sf-teamops-head">
         <LayoutGrid size={14} />
-        <h3>协作策略矩阵</h3>
+        <h3>{t("协作策略矩阵")}</h3>
       </div>
-      <p className="sf-teamops-sub">行 → 列 方向的交接许可 · 点击格子切换 允许 / 警告 / 拒绝</p>
+      <p className="sf-teamops-sub">
+        {t("行 → 列 方向的交接许可 · 点击格子切换 允许 / 警告 / 拒绝")}
+      </p>
       <div
         className="sf-policy-grid"
         style={{ gridTemplateColumns: `58px repeat(${roster.length}, 30px)` }}
       >
         <span />
         {roster.map((c, ci) => (
-          <span className="sf-policy-head" key={`h${c.id}`} title={c.title}>
-            <i style={{ background: colorOf(c.id, ci, c.title) }}>{(c.title || c.id).slice(0, 1)}</i>
-            {(c.title || c.id).slice(0, 2)}
+          <span className="sf-policy-head" key={`h${c.id}`} title={t(c.title)}>
+            <i style={{ background: colorOf(c.id, ci, c.title) }}>{t(c.title || c.id).slice(0, 1)}</i>
+            {t(c.title || c.id).slice(0, 2)}
           </span>
         ))}
         {roster.map((r, ri) => (
           <Fragment key={`r${r.id}`}>
-            <span className="sf-policy-head sf-policy-row" title={r.title}>
-              <i style={{ background: colorOf(r.id, ri, r.title) }}>{(r.title || r.id).slice(0, 1)}</i>
-              {(r.title || r.id).slice(0, 4)}
+            <span className="sf-policy-head sf-policy-row" title={t(r.title)}>
+              <i style={{ background: colorOf(r.id, ri, r.title) }}>{t(r.title || r.id).slice(0, 1)}</i>
+              {t(r.title || r.id).slice(0, 4)}
             </span>
             {roster.map((c) => {
               if (r.id === c.id) {
@@ -397,7 +403,11 @@ function SfPolicyPanel({
                   key={`${r.id}-${c.id}`}
                   className="sf-policy-cell"
                   style={{ background: st ? POLICY_COLORS[st] : "#f1efe9" }}
-                  title={`${r.title} → ${c.title}：${st ? POLICY_LABELS[st] : "默认允许（未配置）"}`}
+                  title={tn("{from} → {to}：{status}", {
+                    from: r.title,
+                    to: c.title,
+                    status: st ? t(POLICY_LABELS[st]) : t("默认允许（未配置）"),
+                  })}
                   onClick={() => onCell(r.id, c.id)}
                 />
               );
@@ -407,18 +417,20 @@ function SfPolicyPanel({
       </div>
       <div className="sf-policy-foot">
         <span className="sf-policy-legend">
-          <i style={{ background: "#16a34a" }} />允许
-          <i style={{ background: "#d97706" }} />警告
-          <i style={{ background: "#dc2626" }} />拒绝
-          <i style={{ background: "#f1efe9" }} />未配置
+          <i style={{ background: "#16a34a" }} />{t("允许")}
+          <i style={{ background: "#d97706" }} />{t("警告")}
+          <i style={{ background: "#dc2626" }} />{t("拒绝")}
+          <i style={{ background: "#f1efe9" }} />{t("未配置")}
         </span>
         {dirty && (
           <button className="sf-policy-save" onClick={onSave} disabled={saveState === "saving"}>
-            {saveState === "saving" ? "保存中…" : "保存策略"}
+            {saveState === "saving" ? t("保存中…") : t("保存策略")}
           </button>
         )}
-        {!dirty && saveState === "ok" && <span className="sf-policy-hint">已保存 ✓</span>}
-        {saveState === "err" && <span className="sf-policy-hint err">保存失败，请重试</span>}
+        {!dirty && saveState === "ok" && <span className="sf-policy-hint">{t("已保存 ✓")}</span>}
+        {saveState === "err" && (
+          <span className="sf-policy-hint err">{t("保存失败，请重试")}</span>
+        )}
       </div>
     </div>
   );
@@ -431,15 +443,18 @@ function SfApprovalsPanel({
   approvals: SfApproval[];
   onDecide: (id: string, decision: "approve" | "reject") => void;
 }) {
+  const { t, tn } = useI18n();
   return (
     <div className="sf-teamops-panel">
       <div className="sf-teamops-head">
         <ShieldCheck size={14} />
-        <h3>审批门 · 封驳矩阵</h3>
-        <span className="sf-teamops-count">{approvals.length} 待决</span>
+        <h3>{t("审批门 · 封驳矩阵")}</h3>
+        <span className="sf-teamops-count">{tn("{n} 待决", { n: approvals.length })}</span>
       </div>
       {approvals.length === 0 ? (
-        <p className="sf-teamops-empty">暂无待审批事项 —— Agent 交接触发审批门时会出现在这里。</p>
+        <p className="sf-teamops-empty">
+          {t("暂无待审批事项 —— Agent 交接触发审批门时会出现在这里。")}
+        </p>
       ) : (
         <div className="sf-approve-list">
           {approvals.map((a) => (
@@ -457,14 +472,14 @@ function SfApprovalsPanel({
               </span>
               <button
                 className="sf-approve-btn ok"
-                title="批准"
+                title={t("批准")}
                 onClick={() => onDecide(a.approval_id, "approve")}
               >
                 <Check size={14} strokeWidth={2.4} />
               </button>
               <button
                 className="sf-approve-btn no"
-                title="驳回"
+                title={t("驳回")}
                 onClick={() => onDecide(a.approval_id, "reject")}
               >
                 <X size={14} strokeWidth={2.4} />
@@ -485,6 +500,7 @@ function TeamOpsSection() {
   const [dirty, setDirty] = useState(false);
   const [saveState, setSaveState] = useState<"idle" | "saving" | "ok" | "err">("idle");
   const [approvals, setApprovals] = useState<SfApproval[]>([]);
+  const { t } = useI18n();
 
   useEffect(() => {
     let dead = false;
@@ -589,50 +605,51 @@ function TeamOpsSection() {
         <SfApprovalsPanel approvals={approvals} onDecide={(id, d) => void decide(id, d)} />
       </div>
       <span className={`sf-live-tag ${live ? "on" : ""}`} data-testid="sf-teamops-source">
-        {loadState === "loading" ? "加载中…" : live ? "LIVE · 已连接后端" : ""}
+        {loadState === "loading" ? t("加载中…") : live ? t("LIVE · 已连接后端") : ""}
       </span>
     </div>
   );
 }
 
 export function AgentsView() {
+  const { t } = useI18n();
   return (
     <section className="sf-subview">
       <div className="sf-subview-intro">
         <div>
           <p>AI WORKFORCE</p>
-          <h1>你的 Agent 团队</h1>
-          <span>为不同角色配置能力、工具与责任边界。</span>
+          <h1>{t("你的 Agent 团队")}</h1>
+          <span>{t("为不同角色配置能力、工具与责任边界。")}</span>
         </div>
         <button>
-          <Plus size={15} /> 创建 Agent
+          <Plus size={15} /> {t("创建 Agent")}
         </button>
       </div>
       <div className="sf-agent-grid">
         {agents.map((agent) => (
           <article key={agent.name}>
             <div>
-              <AgentAvatar label={agent.initials} color={agent.color} />
+              <AgentAvatar label={t(agent.initials)} color={agent.color} />
               <button>
                 <MoreHorizontal size={17} />
               </button>
             </div>
-            <h2>{agent.name}</h2>
-            <p>{agent.role}</p>
+            <h2>{t(agent.name)}</h2>
+            <p>{t(agent.role)}</p>
             <div>
               <span>
                 <Zap size={13} /> 6 Skills
               </span>
               <span>
-                <BookOpen size={13} /> 3 知识源
+                <BookOpen size={13} /> {t("3 知识源")}
               </span>
             </div>
             <footer>
               <span>
-                <i /> {agent.status}
+                <i /> {t(agent.status)}
               </span>
               <button>
-                配置 <ChevronRight size={14} />
+                {t("配置")} <ChevronRight size={14} />
               </button>
             </footer>
           </article>

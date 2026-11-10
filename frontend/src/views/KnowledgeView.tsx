@@ -1,6 +1,7 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { BookOpen, ChevronDown, ChevronRight, FileText, GitBranch, Plus, X } from "lucide-react";
 import { SfLoadState, SfLoadTag, agents, fmtRelativeTime, sfFetch } from "./shared";
+import { translate, translateN, useI18n } from "../i18n";
 
 type SfPackCard = {
   pack_id?: string;
@@ -42,7 +43,7 @@ const FILES_PREVIEW = 2;
 const PACKS_IN_GRAPH = 4;
 
 function packTitle(p: SfPackCard): string {
-  return p.name || p.title || (p.pack_id ? p.pack_id.slice(0, 8) : "未命名");
+  return translate(p.name || p.title || (p.pack_id ? p.pack_id.slice(0, 8) : translate("未命名")));
 }
 
 /** 新建知识包弹窗：POST /api/memory-bank/packs + 可选上传来源文件。 */
@@ -60,6 +61,7 @@ function PackCreateModal({
   const [files, setFiles] = useState<File[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { t, tn } = useI18n();
 
   useEffect(() => {
     if (open) {
@@ -95,7 +97,7 @@ function PackCreateModal({
       onCreated();
       onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "创建失败，请确认后端已连接");
+      setError(err instanceof Error ? err.message : t("创建失败，请确认后端已连接"));
     } finally {
       setBusy(false);
     }
@@ -104,33 +106,33 @@ function PackCreateModal({
   return (
     <div className="modal-backdrop" role="dialog" aria-modal="true" onMouseDown={onClose}>
       <div className="contact-modal sf-auth-modal" onMouseDown={(event) => event.stopPropagation()}>
-        <button className="modal-close" onClick={onClose} aria-label="关闭">
+        <button className="modal-close" onClick={onClose} aria-label={t("关闭")}>
           <X />
         </button>
         <p className="kicker">NEW KNOWLEDGE PACK</p>
-        <h2>新建知识包</h2>
-        <p>知识包是团队共享的知识单元；创建后可继续添加文档、网页与文本来源。</p>
+        <h2>{t("新建知识包")}</h2>
+        <p>{t("知识包是团队共享的知识单元；创建后可继续添加文档、网页与文本来源。")}</p>
         <form onSubmit={submit}>
           <label>
-            名称
+            {t("名称")}
             <input
               required
               value={name}
               onChange={(e: FormEvent<HTMLInputElement>) => setName(e.currentTarget.value)}
-              placeholder="例如：品牌空间 / 新品发布研究"
+              placeholder={t("例如：品牌空间 / 新品发布研究")}
               maxLength={200}
             />
           </label>
           <label>
-            描述
+            {t("描述")}
             <input
               value={description}
               onChange={(e: FormEvent<HTMLInputElement>) => setDescription(e.currentTarget.value)}
-              placeholder="这个知识包包含什么？（可选）"
+              placeholder={t("这个知识包包含什么？（可选）")}
             />
           </label>
           <label>
-            上传来源文件（可选）
+            {t("上传来源文件（可选）")}
             <input
               type="file"
               multiple
@@ -139,10 +141,14 @@ function PackCreateModal({
               }
             />
           </label>
-          {files.length > 0 && <p className="sf-embed-result ok">已选择 {files.length} 个文件，创建后自动摄入</p>}
+          {files.length > 0 && (
+            <p className="sf-embed-result ok">
+              {tn("已选择 {n} 个文件，创建后自动摄入", { n: files.length })}
+            </p>
+          )}
           {error && <p className="sf-auth-error">{error}</p>}
           <button className="button-primary" type="submit" disabled={busy}>
-            {busy ? "创建中…" : "创建知识包"}
+            {busy ? t("创建中…") : t("创建知识包")}
             {!busy && <Plus size={16} />}
           </button>
         </form>
@@ -202,15 +208,19 @@ function KnowledgeNetwork({
     return (
       <div className="sf-net-empty">
         <GitBranch size={22} />
-        <strong>还没有知识包</strong>
-        <span>点右上角「添加知识」建一个，文件和引用关系会出现在这张图里。</span>
+        <strong>{translate("还没有知识包")}</strong>
+        <span>{translate("点右上角「添加知识」建一个，文件和引用关系会出现在这张图里。")}</span>
       </div>
     );
   }
 
   return (
     <div className="sf-net-stage">
-      <svg viewBox={`0 0 720 ${height}`} style={{ height }} aria-label="知识网络：Agent → 知识包 → 文件">
+      <svg
+        viewBox={`0 0 720 ${height}`}
+        style={{ height }}
+        aria-label={translate("知识网络：Agent → 知识包 → 文件")}
+      >
         <defs>
           <filter id="sfNodeGlow" x="-60%" y="-60%" width="220%" height="220%">
             <feGaussianBlur stdDeviation="5" result="b" />
@@ -266,7 +276,7 @@ function KnowledgeNetwork({
             <circle cx={agentX} cy={agentY(ai)} r="16" fill="#8e6cff" opacity="0.1" />
             <circle cx={agentX} cy={agentY(ai)} r="6.5" fill="#fffdf9" stroke="#b6aee0" strokeWidth="2" />
             <text x={agentX} y={agentY(ai) + 26} textAnchor="middle" fontSize="9.5" fill="#8c867f">
-              {a.name}
+              {translate(a.name)}
             </text>
           </g>
         ))}
@@ -290,7 +300,7 @@ function KnowledgeNetwork({
               {g.node.name.length > 12 ? `${g.node.name.slice(0, 12)}…` : g.node.name}
             </text>
             <text x={packX} y={g.cy + 53} textAnchor="middle" fontSize="9" fill="#a8a29a">
-              {g.node.count} 个文件
+              {translateN("{n} 个文件", { n: g.node.count })}
             </text>
           </g>
         ))}
@@ -299,7 +309,7 @@ function KnowledgeNetwork({
         {groups.map((g, gi) =>
           g.shown.map((f, fi) => {
             const y = g.y0 + fi * 34 + 16;
-            const label = f.filename || f.source_id?.slice(0, 8) || "未命名文件";
+            const label = f.filename || f.source_id?.slice(0, 8) || translate("未命名文件");
             return (
               <g key={`file-${gi}-${fi}`} className="sf-net-file">
                 <rect
@@ -317,7 +327,7 @@ function KnowledgeNetwork({
                   {label.length > 16 ? `${label.slice(0, 16)}…` : label}
                 </text>
                 <text x={fileX + 190} y={y + 4} fontSize="9" textAnchor="end" fill="#b3aca2">
-                  {f.chunk_count != null ? `${f.chunk_count} 块` : f.extension || ""}
+                  {f.chunk_count != null ? translateN("{n} 块", { n: f.chunk_count }) : f.extension || ""}
                 </text>
               </g>
             );
@@ -342,14 +352,18 @@ function KnowledgeNetwork({
             >
               <rect x={fileX - 18} y={y - 11} width="200" height="24" rx="8" fill="#f7f4ec" stroke="#e7e0d4" />
               <text x={fileX + 91} y={y + 5} textAnchor="middle" fontSize="9.5" fill="#8c867f">
-                {g.open ? "收起文件" : `还有 ${g.hidden} 个文件 · 点此展开`}
+                {g.open
+                  ? translate("收起文件")
+                  : translateN("还有 {n} 个文件 · 点此展开", { n: g.hidden })}
               </text>
             </g>
           );
         })}
       </svg>
       {truncated > 0 && (
-        <p className="sf-net-truncated">另有 {truncated} 个知识包未画入图中，见下方卡片。</p>
+        <p className="sf-net-truncated">
+          {translateN("另有 {n} 个知识包未画入图中，见下方卡片。", { n: truncated })}
+        </p>
       )}
     </div>
   );
@@ -361,6 +375,7 @@ export function KnowledgeView() {
   const [createOpen, setCreateOpen] = useState(false);
   const [fileMap, setFileMap] = useState<Record<string, SfSource[]>>({});
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+  const { t, tn } = useI18n();
 
   const reload = () => {
     setPacksState("loading");
@@ -406,10 +421,12 @@ export function KnowledgeView() {
   });
 
   const cards: Array<[string, string, string, string, string, SfSource[]]> = (packs ?? []).slice(0, 6).map((p) => [
-    "知识包",
+    t("知识包"),
     packTitle(p),
-    p.description || "团队共享知识包。",
-    `${fileMap[p.pack_id ?? ""]?.length ?? p.stats?.sources ?? p.source_count ?? 0} 个来源`,
+    p.description ? t(p.description) : t("团队共享知识包。"),
+    tn("{n} 个来源", {
+      n: fileMap[p.pack_id ?? ""]?.length ?? p.stats?.sources ?? p.source_count ?? 0,
+    }),
     p.created_at ? fmtRelativeTime(p.created_at) : "",
     fileMap[p.pack_id ?? ""] ?? [],
   ]);
@@ -422,23 +439,23 @@ export function KnowledgeView() {
       <div className="sf-subview-intro">
         <div>
           <p>SHARED CONTEXT</p>
-          <h1>团队知识库</h1>
-          <span>让每位 Agent 都基于同一份可靠信息工作。</span>
+          <h1>{t("团队知识库")}</h1>
+          <span>{t("让每位 Agent 都基于同一份可靠信息工作。")}</span>
         </div>
         <button onClick={() => setCreateOpen(true)}>
-          <Plus size={15} /> 添加知识
+          <Plus size={15} /> {t("添加知识")}
         </button>
       </div>
 
       <div className="sf-network-card">
         <div className="sf-card-title">
           <div>
-            <strong>知识网络</strong>
-            <span>Agent ⁄ 知识包 ⁄ 文件 的真实引用关系</span>
+            <strong>{t("知识网络")}</strong>
+            <span>{t("Agent ⁄ 知识包 ⁄ 文件 的真实引用关系")}</span>
           </div>
           <div className="sf-net-stats">
-            <span className="sf-net-count">{nodes.length} 个知识包</span>
-            <span className="sf-net-count muted">{totalFiles} 个文件</span>
+            <span className="sf-net-count">{tn("{n} 个知识包", { n: nodes.length })}</span>
+            <span className="sf-net-count muted">{tn("{n} 个文件", { n: totalFiles })}</span>
           </div>
         </div>
         <KnowledgeNetwork
@@ -452,7 +469,7 @@ export function KnowledgeView() {
 
       <SfLoadTag state={packsState} />
       {packsState === "ready" && cards.length === 0 && (
-        <p className="sf-biz-empty">还没有知识包 —— 点右上角「添加知识」创建</p>
+        <p className="sf-biz-empty">{t("还没有知识包 —— 点右上角「添加知识」创建")}</p>
       )}
       <div className="sf-knowledge-layout">
         {cards.map(([tag, title, desc, count, updated, files], i) => {
@@ -471,15 +488,15 @@ export function KnowledgeView() {
                     {shown.map((f, fi) => (
                       <li key={`${f.source_id ?? fi}`}>
                         <FileText size={11} />
-                        <span>{f.filename || f.source_id || "未命名文件"}</span>
-                        {f.chunk_count != null && <em>{f.chunk_count} 块</em>}
+                        <span>{f.filename || f.source_id || t("未命名文件")}</span>
+                        {f.chunk_count != null && <em>{tn("{n} 块", { n: f.chunk_count })}</em>}
                       </li>
                     ))}
                   </ul>
                   {files.length > 3 && (
                     <button className="sf-pack-files-toggle" onClick={() => toggle(key)}>
                       {open ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
-                      {open ? "收起" : `还有 ${files.length - 3} 个文件`}
+                      {open ? t("收起") : tn("还有 {n} 个文件", { n: files.length - 3 })}
                     </button>
                   )}
                 </div>

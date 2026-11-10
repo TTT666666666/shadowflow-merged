@@ -101,7 +101,7 @@ const viewCopy: Record<Exclude<View, "chat">, { title: string; subtitle: string 
   agents: { title: "Agent 团队", subtitle: "管理角色、能力与协作关系" },
   knowledge: { title: "知识库", subtitle: "管理团队共享的知识与上下文" },
   biz: { title: "生意看板", subtitle: "手工艺品代销：商品、销售、快递、社媒与盈利" },
-  projects: { title: "工作备忘", subtitle: "个人日程与备忘，随手增删" },
+  projects: { title: "工作备忘", subtitle: "个人日程与备忘，随手增删。" },
   schedules: { title: "定时任务", subtitle: "管理所有 Agent 的周期与一次性计划" },
   settings: { title: "设置", subtitle: "模型、Skills、集成、记忆与工作空间" },
 };
@@ -174,7 +174,7 @@ async function withRetry<T>(fn: () => Promise<T>): Promise<T> {
 }
 
 export default function ProductApp() {
-  const { t } = useI18n();
+  const { t, tn } = useI18n();
   const [view, setView] = useState<View>("chat");
   const [panelOpen, setPanelOpen] = useState(true);
   const [mobileRailOpen, setMobileRailOpen] = useState(false);
@@ -340,16 +340,16 @@ export default function ProductApp() {
   }, []);
 
   const chatStatusText = !activeGroupId
-    ? "选择或新建一个会话"
+    ? t("选择或新建一个会话")
     : chat.status === "loading"
-      ? "正在加载会话…"
+      ? t("正在加载会话…")
       : chat.status === "error"
         ? ""
         : chat.runs.some((r) => !isTerminalRunStatus(r.status))
-          ? "Agent 团队执行中"
+          ? t("Agent 团队执行中")
           : chat.typing
-            ? `${chat.typing} 正在输入…`
-            : "会话在线";
+            ? tn("{name} 正在输入…", { name: chat.typing })
+            : t("会话在线");
 
   const filteredConversations = useMemo(
     () =>
@@ -406,7 +406,7 @@ export default function ProductApp() {
       await deleteGroup(group.group_id);
     } catch (err) {
       const detail = err instanceof Error ? err.message : String(err);
-      showNotice(`删除对话失败：${detail}`);
+      showNotice(tn("删除对话失败：{detail}", { detail }));
       return;
     }
     if (activeGroupId === group.group_id) {
@@ -414,7 +414,7 @@ export default function ProductApp() {
       setActiveTitle("选择或新建一个会话");
     }
     await reloadGroups();
-    showNotice("已删除对话");
+    showNotice(t("已删除对话"));
   }
 
   /** 「董事长」置顶：resolve DM（总经理 agent-shadow-secretary）→ 打开；失败回落第一个 agent 的 DM。 */
@@ -473,7 +473,7 @@ export default function ProductApp() {
   async function createConversation() {
     if (creatingConversation) return;
     setCreatingConversation(true);
-    const name = `新对话 ${groups.length + 1}`;
+    const name = tn("新对话 {n}", { n: groups.length + 1 });
     try {
       const group = await withRetry(async () =>
         createGroup({
@@ -491,10 +491,10 @@ export default function ProductApp() {
         window.setTimeout(() => composerRef.current?.focus(), 0);
         return;
       }
-      showNotice("创建对话失败：后端未返回会话 ID，请重试");
+      showNotice(t("创建对话失败：后端未返回会话 ID，请重试"));
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
-      showNotice(`创建对话失败：${msg}（后端可达后可再次点击「新建」重试）`);
+      showNotice(tn("创建对话失败：{msg}（后端可达后可再次点击「新建」重试）", { msg }));
     } finally {
       setCreatingConversation(false);
     }
@@ -514,10 +514,10 @@ export default function ProductApp() {
       listProjects()
         .then(setProjectsTree)
         .catch(() => setProjectsTree((cur) => cur));
-      showNotice(`项目「${name}」已创建`);
+      showNotice(tn("项目「{name}」已创建", { name }));
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
-      showNotice(`创建项目失败：${msg}`);
+      showNotice(tn("创建项目失败：{msg}", { msg }));
     } finally {
       setCreatingProject(false);
     }
@@ -534,7 +534,7 @@ export default function ProductApp() {
     opts?: { executor?: string; model?: string },
   ): Promise<boolean> {
     if (!activeGroupId) {
-      const name = text.trim().slice(0, 40) || `新对话 ${groups.length + 1}`;
+      const name = text.trim().slice(0, 40) || tn("新对话 {n}", { n: groups.length + 1 });
       try {
         const group = await createGroup({
           name,
@@ -579,10 +579,10 @@ export default function ProductApp() {
             isImage,
             status: "error",
             error: badName
-              ? "文件名含非法字符"
+              ? t("文件名含非法字符")
               : overCount
-                ? "单条消息最多 9 个附件"
-                : "超过 8MB 上限",
+                ? t("单条消息最多 9 个附件")
+                : t("超过 8MB 上限"),
           },
         ]);
         continue;
@@ -600,7 +600,7 @@ export default function ProductApp() {
         } catch (err) {
           patchChatAtt(id, {
             status: "error",
-            error: err instanceof Error ? err.message : "上传失败",
+            error: err instanceof Error ? err.message : t("上传失败"),
             previewUrl: undefined,
           });
         } finally {
@@ -757,7 +757,7 @@ export default function ProductApp() {
       // 无文件也无 URL（纯文本拖放）：只提示不接管，交还浏览器默认行为
       //（如向输入框插入文字，preventDefault 会把这类插入一并吞掉）
       if (isChatDragAccepted(dt)) {
-        showNotice("未识别到可上传的图片，请改用回形针按钮或截图后粘贴");
+        showNotice(t("未识别到可上传的图片，请改用回形针按钮或截图后粘贴"));
       }
       return;
     }
@@ -775,8 +775,8 @@ export default function ProductApp() {
           // 跨域取不到/内容不是图片 → 明确告诉用户换姿势，不许静默
           showNotice(
             err instanceof Error && err.message === "NOT_IMAGE"
-              ? "拖入的内容不是图片，仅支持图片文件"
-              : "无法获取该图片，请改用回形针按钮或截图后粘贴",
+              ? t("拖入的内容不是图片，仅支持图片文件")
+              : t("无法获取该图片，请改用回形针按钮或截图后粘贴"),
           );
         }
       }
@@ -790,7 +790,7 @@ export default function ProductApp() {
     if (atts.some((a) => a.status === "uploading")) return;
     // 失败附件拦截发送（2026-11-09）：此前 error chip 被静默丢弃，用户以为图已发出
     if (atts.some((a) => a.status === "error")) {
-      showNotice("有附件上传失败（红标），请移除后重试，或改用回形针重新上传");
+      showNotice(t("有附件上传失败（红标），请移除后重试，或改用回形针重新上传"));
       return;
     }
     const ready = atts.flatMap((a) => (a.data ? [a.data] : []));
@@ -828,14 +828,14 @@ export default function ProductApp() {
     <div className="sf-app">
       <aside className={`sf-rail ${mobileRailOpen ? "open" : ""}`}>
         <div className="sf-rail-head">
-          <a className="sf-product-brand" href="#/" aria-label="返回 ShadowFlow 官网">
+          <a className="sf-product-brand" href="#/" aria-label={t("返回 ShadowFlow 官网")}>
             <ProductLogo />
             <span>ShadowFlow</span>
           </a>
           <button
             className="sf-mobile-close"
             onClick={() => setMobileRailOpen(false)}
-            aria-label="关闭导航"
+            aria-label={t("关闭导航")}
           >
             <X size={18} />
           </button>
@@ -915,13 +915,13 @@ export default function ProductApp() {
                 <span>{initialsOf(auth.user)}</span>
                 <div>
                   <strong>{displayNameOf(auth.user)}</strong>
-                  <small>{auth.user.email || auth.user.address || "已登录"}</small>
+                  <small>{auth.user.email || auth.user.address || t("已登录")}</small>
                 </div>
               </button>
               <button
                 className="sf-account-dots"
                 onClick={() => setAccountMenuOpen(!accountMenuOpen)}
-                aria-label="账号菜单"
+                aria-label={t("账号菜单")}
               >
                 <MoreHorizontal size={15} />
               </button>
@@ -936,7 +936,7 @@ export default function ProductApp() {
                         openAuth("login");
                       }}
                     >
-                      <UserRound size={13} /> 登录 / 注册
+                      <UserRound size={13} /> {t("登录 / 注册")}
                     </button>
                   )}
                   <button
@@ -946,7 +946,7 @@ export default function ProductApp() {
                       void authLogout();
                     }}
                   >
-                    <LogOut size={13} /> 退出登录
+                    <LogOut size={13} /> {t("退出登录")}
                   </button>
                 </div>
               )}
@@ -957,8 +957,8 @@ export default function ProductApp() {
                 <UserRound size={15} />
               </span>
               <div>
-                <strong>登录 / 注册</strong>
-                <small>当前为演示模式</small>
+                <strong>{t("登录 / 注册")}</strong>
+                <small>{t("当前为演示模式")}</small>
               </div>
               <ChevronRight size={15} />
             </button>
@@ -970,7 +970,7 @@ export default function ProductApp() {
         <button
           className="sf-panel-overlay"
           onClick={() => setPanelOpen(false)}
-          aria-label="关闭对话面板"
+          aria-label={t("关闭对话面板")}
         />
       )}
 
@@ -978,7 +978,7 @@ export default function ProductApp() {
         <button
           className="sf-mobile-overlay"
           onClick={() => setMobileRailOpen(false)}
-          aria-label="关闭导航"
+          aria-label={t("关闭导航")}
         />
       )}
 
@@ -988,7 +988,7 @@ export default function ProductApp() {
             <button
               className="sf-mobile-menu"
               onClick={() => setMobileRailOpen(true)}
-              aria-label="打开导航"
+              aria-label={t("打开导航")}
             >
               <Menu size={19} />
             </button>
@@ -998,7 +998,7 @@ export default function ProductApp() {
                   <ArrowLeft size={15} />
                 </button>
                 <div className="sf-title-block">
-                  <strong>{activeTitle}</strong>
+                  <strong>{t(activeTitle)}</strong>
                   <span>
                     <i /> {chatStatusText}
                   </span>
@@ -1006,8 +1006,8 @@ export default function ProductApp() {
               </>
             ) : (
               <div className="sf-title-block">
-                <strong>{viewCopy[view].title}</strong>
-                <span>{viewCopy[view].subtitle}</span>
+                <strong>{t(viewCopy[view].title)}</strong>
+                <span>{t(viewCopy[view].subtitle)}</span>
               </div>
             )}
           </div>
@@ -1021,7 +1021,7 @@ export default function ProductApp() {
                     .map((id) => agentsList.find((a) => a.agent_id === id))
                     .filter(Boolean)
                     .slice(0, 3) as AgentRecord[];
-                  if (members.length === 0) return <span>董</span>;
+                  if (members.length === 0) return <span>{t("董")}</span>;
                   return members.map((m) => (
                     <span key={m.agent_id}>{(m.name || m.agent_id).slice(0, 1)}</span>
                   ));
@@ -1033,7 +1033,7 @@ export default function ProductApp() {
             </button>
             {view === "chat" && (
               <button className="sf-detail-toggle" onClick={() => setDetailOpen(!detailOpen)}>
-                执行详情
+                {t("执行详情")}
               </button>
             )}
           </div>
@@ -1043,13 +1043,13 @@ export default function ProductApp() {
           <div className="sf-login-banner" role="status">
             <ShieldCheck size={15} />
             <div>
-              <strong>请先登录以使用真实工作台数据</strong>
-              <small>当前为演示模式 —— 界面可浏览，数据将在登录后与后端打通</small>
+              <strong>{t("请先登录以使用真实工作台数据")}</strong>
+              <small>{t("当前为演示模式 —— 界面可浏览，数据将在登录后与后端打通")}</small>
             </div>
-            <button onClick={() => void authGuest()}>游客体验</button>
-            <button onClick={() => openAuth("login")}>登录</button>
+            <button onClick={() => void authGuest()}>{t("游客体验")}</button>
+            <button onClick={() => openAuth("login")}>{t("登录")}</button>
             <button className="ghost" onClick={() => openAuth("register")}>
-              注册
+              {t("注册")}
             </button>
           </div>
         )}

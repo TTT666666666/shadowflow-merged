@@ -21,6 +21,7 @@ import {
   agents,
   sfFetch,
 } from "./shared";
+import { useI18n } from "../i18n";
 
 type SfScheduleRow = {
   schedule_id: string;
@@ -45,6 +46,7 @@ export function SchedulesView() {
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
   const [trigger, setTrigger] = useState<"cron" | "once">("cron");
+  const { t, tn } = useI18n();
 
   const agentNames = useMemo(
     () => new Map(agents.map((a) => [String(a.agent_id), a.name || String(a.agent_id)])),
@@ -114,7 +116,7 @@ export function SchedulesView() {
       setShowCreate(false);
       setReload((n) => n + 1);
     } catch (err) {
-      setCreateError(err instanceof Error ? err.message : "创建失败，请重试");
+      setCreateError(err instanceof Error ? err.message : t("创建失败，请重试"));
     } finally {
       setCreating(false);
     }
@@ -125,54 +127,59 @@ export function SchedulesView() {
       <div className="sf-subview-intro">
         <div>
           <p>AUTOMATIONS</p>
-          <h1>定时任务</h1>
-          <span>全部 Agent 的周期与一次性执行计划。</span>
+          <h1>{t("定时任务")}</h1>
+          <span>{t("全部 Agent 的周期与一次性执行计划。")}</span>
         </div>
         <button onClick={() => setShowCreate(!showCreate)}>
-          <Plus size={15} /> 创建定时任务
+          <Plus size={15} /> {t("创建定时任务")}
         </button>
       </div>
       <SfLoadTag state={loadState} />
       {showCreate && (
         <form className="sf-schedule-create" onSubmit={handleCreate}>
           <label>
-            任务描述
+            {t("任务描述")}
             <input
               autoFocus
               required
               name="taskDescription"
               maxLength={500}
-              placeholder="例如：每天生成竞品动态简报"
+              placeholder={t("例如：每天生成竞品动态简报")}
               disabled={creating}
             />
           </label>
           <label>
-            触发方式
+            {t("触发方式")}
             <select
               value={trigger}
               onChange={(e) => setTrigger(e.target.value === "once" ? "once" : "cron")}
               disabled={creating}
             >
-              <option value="cron">周期（cron）</option>
-              <option value="once">一次性</option>
+              <option value="cron">{t("周期（cron）")}</option>
+              <option value="once">{t("一次性")}</option>
             </select>
           </label>
           {trigger === "cron" ? (
             <label>
-              cron 表达式
-              <input name="cronExpr" required placeholder="0 9 * * *（分 时 日 月 周）" disabled={creating} />
+              {t("cron 表达式")}
+              <input
+                name="cronExpr"
+                required
+                placeholder={t("0 9 * * *（分 时 日 月 周）")}
+                disabled={creating}
+              />
             </label>
           ) : (
             <label>
-              执行时间
+              {t("执行时间")}
               <input name="startAt" type="datetime-local" required disabled={creating} />
             </label>
           )}
           <label>
-            执行群组
+            {t("执行群组")}
             <select name="groupId" required defaultValue="" disabled={creating}>
               <option value="" disabled>
-                选择群组…
+                {t("选择群组…")}
               </option>
               {groups.map((g) => (
                 <option key={g.group_id} value={g.group_id}>
@@ -182,29 +189,29 @@ export function SchedulesView() {
             </select>
           </label>
           <label>
-            指定 Agent（可选）
+            {t("指定 Agent（可选）")}
             <select name="agentId" defaultValue="" disabled={creating}>
-              <option value="">自动调度</option>
+              <option value="">{t("自动调度")}</option>
               {agents.map((a) => (
                 <option key={String(a.agent_id)} value={String(a.agent_id)}>
-                  {a.name || a.agent_id}
+                  {t(a.name || a.agent_id)}
                 </option>
               ))}
             </select>
           </label>
           <div className="sf-schedule-create-actions">
             <button type="submit" disabled={creating}>
-              {creating ? "创建中…" : "创建"}
+              {creating ? t("创建中…") : t("创建")}
             </button>
             <button type="button" onClick={() => setShowCreate(false)} disabled={creating}>
-              取消
+              {t("取消")}
             </button>
             {createError && <span className="sf-schedule-create-error">{createError}</span>}
           </div>
         </form>
       )}
       {loadState === "ready" && rows.length === 0 && (
-        <p className="sf-biz-empty">还没有定时任务 —— 点右上角「创建定时任务」添加</p>
+        <p className="sf-biz-empty">{t("还没有定时任务 —— 点右上角「创建定时任务」添加")}</p>
       )}
       <div className="sf-schedule-list">
         {rows.map((schedule, index) => (
@@ -215,26 +222,33 @@ export function SchedulesView() {
             <div>
               <strong>{schedule.task_description || schedule.schedule_id}</strong>
               <p>
-                <span>{schedule.agent_id ? (agentNames.get(String(schedule.agent_id)) ?? schedule.agent_id) : "自动调度"}</span>
+                <span>
+                  {schedule.agent_id
+                    ? (agentNames.get(String(schedule.agent_id)) ?? schedule.agent_id)
+                    : t("自动调度")}
+                </span>
                 {" · "}
                 {schedule.cron_expression
                   ? `cron · ${schedule.cron_expression}`
-                  : `一次性 · ${String(schedule.start_at ?? "").slice(0, 16).replace("T", " ")}`}
-                {" · 下次 "}
-                {schedule.next_run_time ? String(schedule.next_run_time).slice(0, 16).replace("T", " ") : "待触发"}
+                  : `${t("一次性")} · ${String(schedule.start_at ?? "").slice(0, 16).replace("T", " ")}`}
+                {" · "}
+                {t("下次")}{" "}
+                {schedule.next_run_time
+                  ? String(schedule.next_run_time).slice(0, 16).replace("T", " ")
+                  : t("待触发")}
               </p>
             </div>
             <span className={schedule.enabled ? "enabled" : ""}>
-              {schedule.enabled ? "运行中" : "已停用"}
+              {schedule.enabled ? t("运行中") : t("已停用")}
             </span>
             <button
               className={`sf-switch ${schedule.enabled ? "on" : ""}`}
               onClick={() => toggle(index)}
-              aria-label={schedule.enabled ? "停用任务" : "启用任务"}
+              aria-label={schedule.enabled ? t("停用任务") : t("启用任务")}
             >
               <i />
             </button>
-            <button onClick={() => removeRow(schedule.schedule_id)} aria-label="删除任务">
+            <button onClick={() => removeRow(schedule.schedule_id)} aria-label={t("删除任务")}>
               <Trash2 size={15} />
             </button>
           </article>

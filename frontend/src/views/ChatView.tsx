@@ -87,6 +87,7 @@ import {
   SfProject,
   SF_PALETTE,
 } from "./shared";
+import { translate, translateN, useI18n } from "../i18n";
 
 // ── chat 视图闭包管道（行为保持拆分）─────────────────────────────────
 // ProductApp 顶层 state/handler 经 ChatViewScope 值传递注入；
@@ -183,6 +184,7 @@ function ConversationRow({
   const [menuAt, setMenuAt] = useState<{ x: number; y: number } | null>(null);
   const [confirming, setConfirming] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const { t } = useI18n();
 
   const closeMenu = useCallback(() => {
     setMenuAt(null);
@@ -218,7 +220,7 @@ function ConversationRow({
           {group.kind === "dm" && <i />}
         </span>
         <span>
-          <strong>{group.name || "未命名会话"}</strong>
+          <strong>{group.name || t("未命名会话")}</strong>
           <small>{groupPreview(group)}</small>
         </span>
         <time>{fmtRelativeTime(groupActivityIso(group))}</time>
@@ -236,7 +238,7 @@ function ConversationRow({
           <div className="sf-ctx-menu" style={{ left: menuAt.x, top: menuAt.y }} role="menu">
             {confirming ? (
               <>
-                <p className="sf-ctx-warn">删除后聊天记录不可恢复</p>
+                <p className="sf-ctx-warn">{t("删除后聊天记录不可恢复")}</p>
                 <button
                   className="sf-ctx-danger"
                   role="menuitem"
@@ -250,16 +252,16 @@ function ConversationRow({
                   }}
                 >
                   <Trash2 size={13} />
-                  {deleting ? "删除中…" : "确认删除"}
+                  {deleting ? t("删除中…") : t("确认删除")}
                 </button>
                 <button role="menuitem" onClick={closeMenu}>
-                  取消
+                  {t("取消")}
                 </button>
               </>
             ) : (
               <button className="sf-ctx-danger" role="menuitem" onClick={() => setConfirming(true)}>
                 <Trash2 size={13} />
-                删除对话
+                {t("删除对话")}
               </button>
             )}
           </div>
@@ -335,6 +337,10 @@ export function renderChatView(scope: ChatViewScope) {
     togglePlusConnector,
     dragOver,
   } = scope;
+  // render-function 不能调 hook：直读当前偏好。调用方 ProductApp 订阅了偏好变化，
+  // 切语言会整树重渲染，因此这里取到的永远是新语言（2026-11-10）。
+  const t = translate;
+  const tn = translateN;
   return (
           <div
             className={`sf-chat-layout ${panelOpen ? "" : "panel-closed"}`}
@@ -347,11 +353,11 @@ export function renderChatView(scope: ChatViewScope) {
                       <MessageSquare size={14} />
                     </span>
                     <div>
-                      <strong>对话</strong>
-                      <small>搜索、新建或继续任何会话</small>
+                      <strong>{t("对话")}</strong>
+                      <small>{t("搜索、新建或继续任何会话")}</small>
                     </div>
                   </div>
-                  <button onClick={() => setPanelOpen(false)} aria-label="收起对话面板">
+                  <button onClick={() => setPanelOpen(false)} aria-label={t("收起对话面板")}>
                     <X size={15} />
                   </button>
                 </div>
@@ -363,14 +369,14 @@ export function renderChatView(scope: ChatViewScope) {
                     aria-haspopup="menu"
                   >
                     <Plus size={12} />
-                    <span>新建</span>
+                    <span>{t("新建")}</span>
                     <ChevronDown size={12} className="sf-new-caret" />
                   </button>
                   {newMenuOpen && (
                     <>
                       <button
                         className="sf-plus-backdrop"
-                        aria-label="关闭新建菜单"
+                        aria-label={t("关闭新建菜单")}
                         onClick={() => {
                           setNewMenuOpen(false);
                           setNewMenuView("root");
@@ -387,7 +393,7 @@ export function renderChatView(scope: ChatViewScope) {
                               onClick={() => void createConversation()}
                             >
                               <MessageSquare size={14} />
-                              <span>{creatingConversation ? "创建中…" : "新建对话"}</span>
+                              <span>{creatingConversation ? t("创建中…") : t("新建对话")}</span>
                             </button>
                             <button
                               type="button"
@@ -396,7 +402,7 @@ export function renderChatView(scope: ChatViewScope) {
                               onClick={() => setNewMenuView("project")}
                             >
                               <Folder size={14} />
-                              <span>新建项目</span>
+                              <span>{t("新建项目")}</span>
                               <ChevronRight size={13} className="sf-plus-chev" />
                             </button>
                           </>
@@ -408,7 +414,7 @@ export function renderChatView(scope: ChatViewScope) {
                               onClick={() => setNewMenuView("root")}
                             >
                               <ChevronLeft size={13} />
-                              <span>新建项目</span>
+                              <span>{t("新建项目")}</span>
                             </button>
                             <form className="sf-new-form" onSubmit={handleCreateProject}>
                               <input
@@ -416,11 +422,11 @@ export function renderChatView(scope: ChatViewScope) {
                                 required
                                 name="newProjectName"
                                 maxLength={60}
-                                placeholder="输入项目名称"
+                                placeholder={t("输入项目名称")}
                                 disabled={creatingProject}
                               />
                               <button type="submit" disabled={creatingProject}>
-                                {creatingProject ? "创建中…" : "创建"}
+                                {creatingProject ? t("创建中…") : t("创建")}
                               </button>
                             </form>
                           </>
@@ -435,7 +441,7 @@ export function renderChatView(scope: ChatViewScope) {
                     ref={searchRef}
                     value={query}
                     onChange={(event) => setQuery(event.target.value)}
-                    placeholder="搜索对话、项目或 Agent"
+                    placeholder={t("搜索对话、项目或 Agent")}
                   />
                   <kbd>⌘K</kbd>
                 </label>
@@ -446,27 +452,27 @@ export function renderChatView(scope: ChatViewScope) {
                   >
                     <AgentAvatar label="CEO" color="#ff5e3a" size="lg" />
                     <div>
-                      <strong>董事长</strong>
-                      <small>全局调度 · 任务拆解与决策</small>
+                      <strong>{t("董事长")}</strong>
+                      <small>{t("全局调度 · 任务拆解与决策")}</small>
                     </div>
                     <i />
                   </button>
                 )}
-                <p>最近对话</p>
+                <p>{t("最近对话")}</p>
                 <div className="sf-conversation-list">
-                  {groupsState === "loading" && <p className="sf-thread-hint">正在加载会话…</p>}
+                  {groupsState === "loading" && <p className="sf-thread-hint">{t("正在加载会话…")}</p>}
                   {groupsState === "error" && (
                     <p className="sf-thread-hint">
                       <button type="button" className="sf-link-btn" onClick={() => void reloadGroups()}>
-                        重试
+                        {t("重试")}
                       </button>
                     </p>
                   )}
                   {groupsState === "ready" && filteredConversations.length === 0 && (
                     <p className="sf-thread-hint">
                       {groups.length === 0
-                        ? "还没有会话 —— 点「新建」或用下面的快捷指令开始。"
-                        : "没有匹配的会话"}
+                        ? t("还没有会话 —— 点「新建」或用下面的快捷指令开始。")
+                        : t("没有匹配的会话")}
                     </p>
                   )}
                   {filteredConversations.map((group) => (
@@ -479,16 +485,16 @@ export function renderChatView(scope: ChatViewScope) {
                     />
                   ))}
                 </div>
-                <p>项目与 Agent</p>
+                <p>{t("项目与 Agent")}</p>
                 <div className="sf-project-tree">
                   {projectsTree.length === 0 && agentsList.length === 0 && (
-                    <p className="sf-thread-hint">暂无项目与 Agent（尚未创建）</p>
+                    <p className="sf-thread-hint">{t("暂无项目与 Agent（尚未创建）")}</p>
                   )}
                   {query.trim() &&
                     projectsTree.length + agentsList.length > 0 &&
                     filteredProjects.length === 0 &&
                     filteredAgents.length === 0 && (
-                      <p className="sf-thread-hint">没有匹配的项目或 Agent</p>
+                      <p className="sf-thread-hint">{t("没有匹配的项目或 Agent")}</p>
                     )}
                   {filteredProjects.map((project) => {
                     const expanded = !!expandedProjects[project.project_id];
@@ -512,7 +518,7 @@ export function renderChatView(scope: ChatViewScope) {
                         </button>
                         {expanded &&
                           (sessions.length === 0 ? (
-                            <p className="sf-thread-hint sf-tree-empty">暂无会话</p>
+                            <p className="sf-thread-hint sf-tree-empty">{t("暂无会话")}</p>
                           ) : (
                             sessions.map((session, idx) => {
                               const s = session as { session_id?: string; status?: string; title?: string };
@@ -520,7 +526,7 @@ export function renderChatView(scope: ChatViewScope) {
                                 <div className="sf-session-row" key={s.session_id ?? idx}>
                                   <span />
                                   <p>
-                                    {s.title || s.session_id || `会话 ${idx + 1}`}
+                                    {s.title || s.session_id || tn("会话 {n}", { n: idx + 1 })}
                                     {s.status ? ` · ${s.status}` : ""}
                                   </p>
                                 </div>
@@ -535,7 +541,7 @@ export function renderChatView(scope: ChatViewScope) {
                       className="sf-agent-tree-row"
                       key={agent.agent_id ?? agent.name}
                       onClick={() => void openAgentDm(agent)}
-                      title="点击打开单聊"
+                      title={t("点击打开单聊")}
                     >
                       <AgentAvatar
                         label={(agent.name || agent.agent_id || "?").slice(0, 2).toUpperCase()}
@@ -546,8 +552,8 @@ export function renderChatView(scope: ChatViewScope) {
                         small
                       />
                       <span>
-                        <strong>{agent.name || agent.agent_id}</strong>
-                        <small>{agent.soul || agent.role || "Agent"}</small>
+                        <strong>{t(agent.name || agent.agent_id)}</strong>
+                        <small>{t(agent.soul || agent.role || "Agent")}</small>
                       </span>
                       <i className={agent.status === "执行中" ? "working" : ""} />
                     </button>
@@ -586,7 +592,7 @@ export function renderChatView(scope: ChatViewScope) {
                   <p className="sf-composer-notice" role="alert">
                     <AlertTriangle size={12} />
                     <span>{notice}</span>
-                    <button type="button" onClick={() => setNotice(null)} aria-label="关闭提示">
+                    <button type="button" onClick={() => setNotice(null)} aria-label={t("关闭提示")}>
                       <X size={11} />
                     </button>
                   </p>
@@ -603,16 +609,16 @@ export function renderChatView(scope: ChatViewScope) {
                           <FileText size={13} />
                         )}
                         <span title={a.name}>{a.name}</span>
-                        {a.status === "uploading" && <em className="sf-att-up">上传中…</em>}
+                        {a.status === "uploading" && <em className="sf-att-up">{t("上传中…")}</em>}
                         {a.status === "error" && (
                           <em className="sf-att-err" title={a.error}>
-                            {a.error || "失败"}
+                            {a.error || t("失败")}
                           </em>
                         )}
                         <button
                           type="button"
                           onClick={() => removeChatAtt(a.id)}
-                          aria-label={`移除附件 ${a.name}`}
+                          aria-label={tn("移除附件 {name}", { name: a.name })}
                         >
                           <X size={10} />
                         </button>
@@ -634,8 +640,8 @@ export function renderChatView(scope: ChatViewScope) {
                   }}
                   placeholder={
                     activeGroupId
-                      ? "继续这个会话，或给团队下发新任务…"
-                      : "告诉团队接下来要做什么…"
+                      ? t("继续这个会话，或给团队下发新任务…")
+                      : t("告诉团队接下来要做什么…")
                   }
                 />
                 <div>
@@ -643,7 +649,7 @@ export function renderChatView(scope: ChatViewScope) {
                     {/* 加号置最左（2026-11-10）；连接器激活后旁侧显示小红书徽标（参考 WorkBuddy +GitHub 形式） */}
                     <button
                       type="button"
-                      aria-label="更多"
+                      aria-label={t("更多")}
                       className={plusView ? "sf-plus-trigger open" : "sf-plus-trigger"}
                       onClick={() => setPlusView(plusView ? null : "root")}
                     >
@@ -653,8 +659,8 @@ export function renderChatView(scope: ChatViewScope) {
                       <button
                         type="button"
                         className="sf-conn-chip"
-                        aria-label="小红书发布已就绪（点击移除）"
-                        title="小红书发布已就绪 · 点击移除"
+                        aria-label={t("小红书发布已就绪（点击移除）")}
+                        title={t("小红书发布已就绪 · 点击移除")}
                         onClick={() => setXhsChip(false)}
                       >
                         <XhsIcon size={17} />
@@ -662,7 +668,7 @@ export function renderChatView(scope: ChatViewScope) {
                     )}
                     <button
                       type="button"
-                      aria-label="添加附件"
+                      aria-label={t("添加附件")}
                       onClick={() => fileInputRef.current?.click()}
                     >
                       <Paperclip size={16} />
@@ -695,7 +701,7 @@ export function renderChatView(scope: ChatViewScope) {
                                 onClick={() => openPlusView("skills")}
                               >
                                 <Sparkles size={14} />
-                                <span>技能</span>
+                                <span>{t("技能")}</span>
                                 <ChevronRight size={13} className="sf-plus-chev" />
                               </button>
                               <button
@@ -705,7 +711,7 @@ export function renderChatView(scope: ChatViewScope) {
                                 onClick={() => openPlusView("connectors")}
                               >
                                 <Link2 size={14} />
-                                <span>连接器</span>
+                                <span>{t("连接器")}</span>
                                 <ChevronRight size={13} className="sf-plus-chev" />
                               </button>
                             </>
@@ -718,10 +724,10 @@ export function renderChatView(scope: ChatViewScope) {
                                 onClick={() => setPlusView("root")}
                               >
                                 <ChevronLeft size={13} />
-                                <span>技能</span>
+                                <span>{t("技能")}</span>
                               </button>
-                              {plusSkills === null && <p className="sf-plus-note">加载中…</p>}
-                              {plusSkills?.length === 0 && <p className="sf-plus-note">暂无技能</p>}
+                              {plusSkills === null && <p className="sf-plus-note">{t("加载中…")}</p>}
+                              {plusSkills?.length === 0 && <p className="sf-plus-note">{t("暂无技能")}</p>}
                               {plusSkills?.map((s) => (
                                 <div key={s.skill_id} className="sf-plus-row">
                                   <button
@@ -730,7 +736,8 @@ export function renderChatView(scope: ChatViewScope) {
                                     title={s.description || s.skill_id}
                                     onClick={() =>
                                       insertIntoComposer(
-                                        s.example_prompt?.trim() || `【技能】${s.name || s.skill_id}`,
+                                        s.example_prompt?.trim() ||
+                                          tn("【技能】{name}", { name: s.name || s.skill_id }),
                                       )
                                     }
                                   >
@@ -740,10 +747,10 @@ export function renderChatView(scope: ChatViewScope) {
                                   <button
                                     type="button"
                                     className={s.enabled === false ? "sf-plus-tag off" : "sf-plus-tag"}
-                                    title={s.enabled === false ? "点击启用" : "点击停用"}
+                                    title={s.enabled === false ? t("点击启用") : t("点击停用")}
                                     onClick={() => void togglePlusSkill(s)}
                                   >
-                                    {s.enabled === false ? "停用" : "启用"}
+                                    {s.enabled === false ? t("停用") : t("启用")}
                                   </button>
                                 </div>
                               ))}
@@ -757,10 +764,10 @@ export function renderChatView(scope: ChatViewScope) {
                                 onClick={() => setPlusView("root")}
                               >
                                 <ChevronLeft size={13} />
-                                <span>连接器</span>
+                                <span>{t("连接器")}</span>
                               </button>
-                              <p className="sf-plus-group">发布通道</p>
-                              {plusConnectors === null && <p className="sf-plus-note">加载中…</p>}
+                              <p className="sf-plus-group">{t("发布通道")}</p>
+                              {plusConnectors === null && <p className="sf-plus-note">{t("加载中…")}</p>}
                               {(() => {
                                 const xhsAccounts = plusConnectors?.accounts.filter((a) =>
                                   a.platform.includes("xiaohongshu"),
@@ -768,29 +775,31 @@ export function renderChatView(scope: ChatViewScope) {
                                 const xhs =
                                   xhsAccounts?.find((a) => a.auth_mode === "real") ?? xhsAccounts?.[0];
                                 const xhsStatus = xhs
-                                  ? `${xhs.auth_mode === "real" ? "真实发布" : "mock 演示"}${xhs.account_name ? ` · ${xhs.account_name}` : ""}`
-                                  : "未配置账号 · 默认 mock 演示";
+                                  ? `${xhs.auth_mode === "real" ? t("真实发布") : t("mock 演示")}${xhs.account_name ? ` · ${xhs.account_name}` : ""}`
+                                  : t("未配置账号 · 默认 mock 演示");
                                 return (
                                   <div className="sf-plus-row">
                                     <button
                                       type="button"
                                       className="sf-plus-row-main"
-                                      title="点亮后，输入的内容将以小红书笔记直接发布（不再显示协议文本）"
+                                      title={t(
+                                        "点亮后，输入的内容将以小红书笔记直接发布（不再显示协议文本）",
+                                      )}
                                       onClick={() => {
                                         setXhsChip(true); // 只点亮徽标，不往输入框塞 [post] JSON（2026-11-10）
                                         setPlusView(null);
                                       }}
                                     >
-                                      <strong>小红书发布</strong>
+                                      <strong>{t("小红书发布")}</strong>
                                       <small>{xhsStatus}</small>
                                     </button>
-                                    <span className="sf-plus-tag">发帖</span>
+                                    <span className="sf-plus-tag">{t("发帖")}</span>
                                   </div>
                                 );
                               })()}
                               <p className="sf-plus-group">MCP / ACP</p>
                               {plusConnectors?.connectors.length === 0 && (
-                                <p className="sf-plus-note">未检测到连接器</p>
+                                <p className="sf-plus-note">{t("未检测到连接器")}</p>
                               )}
                               {plusConnectors?.connectors.map((c) => {
                                 const on = c.policy?.enabled ?? true;
@@ -799,17 +808,17 @@ export function renderChatView(scope: ChatViewScope) {
                                     <div className="sf-plus-row-main static" title={c.id}>
                                       <strong>{c.name || c.id}</strong>
                                       <small>
-                                        {c.kind ?? "connector"} · {c.status ?? "未知状态"} ·{" "}
+                                        {c.kind ?? "connector"} · {c.status ?? t("未知状态")} ·{" "}
                                         {c.policy?.approval_mode ?? "auto"}
                                       </small>
                                     </div>
                                     <button
                                       type="button"
                                       className={on ? "sf-plus-tag" : "sf-plus-tag off"}
-                                      title={on ? "点击停用" : "点击启用"}
+                                      title={on ? t("点击停用") : t("点击启用")}
                                       onClick={() => void togglePlusConnector(c)}
                                     >
-                                      {on ? "启用" : "停用"}
+                                      {on ? t("启用") : t("停用")}
                                     </button>
                                   </div>
                                 );
@@ -821,7 +830,7 @@ export function renderChatView(scope: ChatViewScope) {
                     )}
                   </span>
                   <span>
-                    <small>Enter 发送 · Shift + Enter 换行</small>
+                    <small>{t("Enter 发送 · Shift + Enter 换行")}</small>
                     <button
                       className="sf-send"
                       type="submit"
@@ -829,7 +838,7 @@ export function renderChatView(scope: ChatViewScope) {
                         (!message.trim() && !atts.some((a) => a.status === "done")) ||
                         atts.some((a) => a.status === "uploading")
                       }
-                      aria-label="发送"
+                      aria-label={t("发送")}
                     >
                       <Send size={15} />
                     </button>
@@ -841,8 +850,8 @@ export function renderChatView(scope: ChatViewScope) {
               {dragOver && (
                 <div className="sf-drop-overlay" aria-hidden="true">
                   <Paperclip size={22} />
-                  <strong>松开以上传</strong>
-                  <small>单个文件不超过 8MB</small>
+                  <strong>{t("松开以上传")}</strong>
+                  <small>{t("单个文件不超过 8MB")}</small>
                 </div>
               )}
             </section>
@@ -857,12 +866,16 @@ const quickPrompts = [
   "创建一个定时任务",
 ];
 
-const RUN_STATUS_TEXT: Record<string, string> = {
-  done: "已完成",
-  running: "执行中",
-  pending: "等待中",
-  failed: "失败",
-};
+/** 运行状态 → 展示文案（中文原文即 key，随界面语言）。未知状态原样返回。 */
+function runStatusText(status: string): string {
+  const ZH: Record<string, string> = {
+    done: "已完成",
+    running: "执行中",
+    pending: "等待中",
+    failed: "失败",
+  };
+  return translate(ZH[status] ?? status);
+}
 
 type RunStep = {
   name: string;
@@ -926,7 +939,13 @@ export function deriveSteps(messages: TimelineMessage[]): RunStep[] {
       return {
         name: s.name,
         status,
-        meta: s.elapsed_ms != null ? fmtElapsed(s.elapsed_ms) : status === "pending" ? "等待中" : status === "failed" ? "失败" : "",
+        meta: s.elapsed_ms != null
+          ? fmtElapsed(s.elapsed_ms)
+          : status === "pending"
+            ? translate("等待中")
+            : status === "failed"
+              ? translate("失败")
+              : "",
         substeps: (s.substeps ?? []).map((sub) => ({
           agent: sub.name,
           slot: "",
@@ -959,7 +978,7 @@ export function deriveArtifacts(messages: TimelineMessage[]): ArtifactItem[] {
         name: m.filename ?? m.path ?? "diff",
         type: "diff",
         summary: `+${m.added ?? 0} −${m.removed ?? 0}`,
-        size: `${(m.lines ?? []).length} 行`,
+        size: translateN("{n} 行", { n: (m.lines ?? []).length }),
         pinned: false,
       });
     } else if (m.kind === "commit_record") {
@@ -968,7 +987,7 @@ export function deriveArtifacts(messages: TimelineMessage[]): ArtifactItem[] {
         name: `${m.short_sha ?? ""} ${m.message ?? ""}`.trim() || "commit",
         type: "commit",
         summary: `${m.repo ?? ""}${m.author ? ` · ${m.author}` : ""}`,
-        size: `${m.files_changed ?? 0} 文件`,
+        size: translateN("{n} 文件", { n: m.files_changed ?? 0 }),
         pinned: false,
         url: m.url,
       });
@@ -1039,10 +1058,13 @@ function normalizeApproval(item: PendingApprovalItem, idx: number): ApprovalItem
     from: name,
     label: name.slice(0, 2).toUpperCase(),
     color: SF_PALETTE[name.length % SF_PALETTE.length],
-    summary: item.summary || `${item.kind ?? "审批"} · ${item.target ?? id}`,
-    when: item.waiting_seconds != null ? `已等待 ${fmtElapsed(item.waiting_seconds * 1000)}` : "等待中",
+    summary: item.summary || `${item.kind ?? translate("审批")} · ${item.target ?? id}`,
+    when:
+      item.waiting_seconds != null
+        ? translateN("已等待 {t}", { t: fmtElapsed(item.waiting_seconds * 1000) })
+        : translate("等待中"),
     state: "pending",
-    kind: String(item.kind ?? "审批"),
+    kind: String(item.kind ?? translate("审批")),
     target: String(item.target ?? id),
     detail: String(item.detail ?? ""),
     impact: String(item.impact ?? ""),
@@ -1064,7 +1086,7 @@ function SfDagRail({ dag }: { dag: SfTeamDag }) {
             <div className="sf-dag-node">
               <span className={idx === 0 ? "entry" : ""} />
               <strong>{node.title || node.id}</strong>
-              <em>{outs.some((e) => (e.mode ?? e.data?.mode) === "approve") ? "approve · 人工门" : "task"}</em>
+              <em>{outs.some((e) => (e.mode ?? e.data?.mode) === "approve") ? `approve · ${translate("人工门")}` : "task"}</em>
             </div>
             {outs.map((e, i) => (
               <p className="sf-dag-edge" key={`${e.target}-${i}`}>
@@ -1083,9 +1105,10 @@ function lastActivityOf(messages: TimelineMessage[], name: string): string {
   for (let i = messages.length - 1; i >= 0; i -= 1) {
     const m = messages[i];
     if (m.agent_name !== name && m.sender_name !== name) continue;
-    if (m.kind === "tool_call") return `${m.name ?? "工具"}${m.status ? ` · ${m.status}` : ""}`;
-    if (m.kind === "assistant_text") return "输出回复";
-    if (m.kind === "thinking") return m.label || "思考中";
+    if (m.kind === "tool_call")
+      return `${m.name ?? translate("工具")}${m.status ? ` · ${m.status}` : ""}`;
+    if (m.kind === "assistant_text") return translate("输出回复");
+    if (m.kind === "thinking") return m.label || translate("思考中");
     return String(m.kind);
   }
   return "—";
@@ -1126,6 +1149,7 @@ function TaskStatusPanel({
   // ── 多任务切换：真实 run 任务列表（goal=任务名），activeSid=null 为合并视图 ──
   const [sessions, setSessions] = useState<RunSessionItem[]>([]);
   const [activeSid, setActiveSid] = useState<string | null>(null);
+  const { t, tn } = useI18n();
 
   const messages = chat.messages;
   // 任务切片：选中具体任务时只归并该 session 的过程消息（消息↔任务关联来自 session_id 标签）
@@ -1235,7 +1259,7 @@ function TaskStatusPanel({
   const activeAgentName =
     chat.typing ??
     [...scoped].reverse().find((m) => m.agent_name)?.agent_name ??
-    "Agent 团队";
+    t("Agent 团队");
   const progressPct = steps.length > 0 ? Math.round((doneSteps / steps.length) * 100) : 0;
 
   /** 步骤级重跑：优先调 run-sessions step retry，再消息重下发（无假动画）。 */
@@ -1248,7 +1272,7 @@ function TaskStatusPanel({
         /* retry 接口不可用 → 仅消息重下发 */
       }
     }
-    await chat.send(`重跑步骤「${name}」`);
+    await chat.send(tn("重跑步骤「{name}」", { name }));
   };
 
   const rerunAll = () => {
@@ -1265,13 +1289,13 @@ function TaskStatusPanel({
         label: "AG",
         color: "#999",
         summary: id,
-        kind: "审批",
+        kind: t("审批"),
         target: id,
         detail: "",
         impact: "",
       }),
       state,
-      when: "刚刚",
+      when: t("刚刚"),
       note: state === "approved" ? comment || undefined : undefined,
       reason: state === "rejected" ? comment || undefined : undefined,
     };
@@ -1296,7 +1320,15 @@ function TaskStatusPanel({
       <div className="sf-task-head">
         <span
           className={`sf-task-status ${running ? "running" : runFailed ? "failed" : runSucceeded ? "done" : "idle"}`}
-          title={running ? "执行中" : runFailed ? "任务失败" : runSucceeded ? "任务完成" : "空闲"}
+          title={
+            running
+              ? t("执行中")
+              : runFailed
+                ? t("任务失败")
+                : runSucceeded
+                  ? t("任务完成")
+                  : t("空闲")
+          }
         >
           {running ? (
             <RotateCcw size={11} className="sf-spin" />
@@ -1314,14 +1346,23 @@ function TaskStatusPanel({
           small
         />
         <div className="sf-task-title">
-          <strong title={taskName}>{taskName}</strong>
+          <strong title={taskName}>{t(taskName)}</strong>
           <small>
             {activeAgentName}
-            {running ? " · 执行中" : runFailed ? " · 失败" : runSucceeded ? " · 已完成" : ""}
+            {running
+              ? ` · ${t("执行中")}`
+              : runFailed
+                ? ` · ${t("失败")}`
+                : runSucceeded
+                  ? ` · ${t("已完成")}`
+                  : ""}
           </small>
         </div>
         {steps.length > 0 && (
-          <div className="sf-task-progress" title={`${doneSteps} / ${steps.length} 个步骤已完成`}>
+          <div
+            className="sf-task-progress"
+            title={tn("{done} / {total} 个步骤已完成", { done: doneSteps, total: steps.length })}
+          >
             <span className="sf-task-progress-track">
               <i style={{ width: `${progressPct}%` }} />
             </span>
@@ -1330,7 +1371,13 @@ function TaskStatusPanel({
         )}
         <div className="sf-run-meta">
           <span className={`sf-run-pill ${running ? "running" : runFailed ? "failed" : "stopped"}`}>
-            {running ? "运行中" : runFailed ? "失败" : runSucceeded ? "已完成" : "空闲"}
+            {running
+              ? t("运行中")
+              : runFailed
+                ? t("失败")
+                : runSucceeded
+                  ? t("已完成")
+                  : t("空闲")}
           </span>
           {(stats.elapsedMs > 0 || (running && turnStart > 0)) && (
             <span className="sf-run-ticker">
@@ -1342,12 +1389,16 @@ function TaskStatusPanel({
         </div>
         <div className="sf-run-actions">
           {running && groupId ? (
-            <button className="sf-mini-btn danger" onClick={() => void chat.stop()} title="停止当前任务">
-              <Square size={8} /> 停止
+            <button
+              className="sf-mini-btn danger"
+              onClick={() => void chat.stop()}
+              title={t("停止当前任务")}
+            >
+              <Square size={8} /> {t("停止")}
             </button>
           ) : runFailed ? (
-            <button className="sf-mini-btn ok" onClick={rerunAll} title="重试失败的任务">
-              <RotateCcw size={8} /> 重试
+            <button className="sf-mini-btn ok" onClick={rerunAll} title={t("重试失败的任务")}>
+              <RotateCcw size={8} /> {t("重试")}
             </button>
           ) : runSucceeded ? (
             <button
@@ -1356,25 +1407,30 @@ function TaskStatusPanel({
                 setExpanded(true);
                 setTab("artifacts");
               }}
-              title="查看任务产物"
+              title={t("查看任务产物")}
             >
-              <FileText size={8} /> 产物
+              <FileText size={8} /> {t("产物")}
             </button>
           ) : (
-            <button className="sf-mini-btn ok" onClick={rerunAll} title="重跑上一轮任务">
-              <Play size={8} /> 重跑上一轮
+            <button className="sf-mini-btn ok" onClick={rerunAll} title={t("重跑上一轮任务")}>
+              <Play size={8} /> {t("重跑上一轮")}
             </button>
           )}
         </div>
         <button
           className={`sf-task-chevron ${expanded ? "open" : ""}`}
           onClick={() => setExpanded((v) => !v)}
-          aria-label={expanded ? "收起任务面板" : "展开任务面板"}
-          title={expanded ? "收起" : "展开"}
+          aria-label={expanded ? t("收起任务面板") : t("展开任务面板")}
+          title={expanded ? t("收起") : t("展开")}
         >
           <ChevronDown size={13} />
         </button>
-        <button className="sf-task-chevron" onClick={onClose} aria-label="隐藏任务面板" title="隐藏（顶栏可再打开）">
+        <button
+          className="sf-task-chevron"
+          onClick={onClose}
+          aria-label={t("隐藏任务面板")}
+          title={t("隐藏（顶栏可再打开）")}
+        >
           <X size={12} />
         </button>
       </div>
@@ -1388,7 +1444,7 @@ function TaskStatusPanel({
                 className={activeSid === null ? "on" : ""}
                 onClick={() => setActiveSid(null)}
               >
-                全部
+                {t("全部")}
               </button>
               {sessions.map((s) => (
                 <button
@@ -1409,12 +1465,15 @@ function TaskStatusPanel({
           {/* Row 2 · 紧凑任务执行列表（绿勾 / 动态加载 / 灰等待 / 红错） */}
           <div className="sf-task-steps">
             <div className="sf-task-steps-title">
-              <span>执行步骤{steps.length > 0 ? ` · ${doneSteps}/${steps.length}` : ""}</span>
-              {running && <em className="sf-step-live">实时更新</em>}
+              <span>
+                {t("执行步骤")}
+                {steps.length > 0 ? ` · ${doneSteps}/${steps.length}` : ""}
+              </span>
+              {running && <em className="sf-step-live">{t("实时更新")}</em>}
             </div>
             {steps.length === 0 ? (
               <p className="sf-empty">
-                暂无运行记录 —— 在对话里给团队下发任务后，这里会实时显示执行步骤。
+                {t("暂无运行记录 —— 在对话里给团队下发任务后，这里会实时显示执行步骤。")}
               </p>
             ) : (
               <ol className="sf-task-step-list">
@@ -1433,7 +1492,7 @@ function TaskStatusPanel({
                     </span>
                     <strong>{step.name}</strong>
                     <small>
-                      {step.meta || (RUN_STATUS_TEXT[step.status] ?? step.status)}
+                      {step.meta || (runStatusText(step.status))}
                     </small>
                     {step.substeps.length > 0 && (
                       <span className="sf-task-sub-chips">
@@ -1441,7 +1500,7 @@ function TaskStatusPanel({
                           <em key={`${sub.agent}-${si}`} className={sub.status}>
                             {sub.agent}
                             {sub.slot ? ` · ${sub.slot}` : ""} ·{" "}
-                            {RUN_STATUS_TEXT[sub.status] ?? sub.status}
+                            {runStatusText(sub.status)}
                           </em>
                         ))}
                       </span>
@@ -1454,28 +1513,32 @@ function TaskStatusPanel({
 
       <div className="sf-run-tabs">
         <button className={tab === "flow" ? "on" : ""} onClick={() => setTab("flow")}>
-          过程
+          {t("过程")}
         </button>
         <button className={tab === "team" ? "on" : ""} onClick={() => setTab("team")}>
-          团队
+          {t("团队")}
         </button>
         <button className={tab === "approval" ? "on" : ""} onClick={() => setTab("approval")}>
-          审批{pendingCount > 0 ? <em>{pendingCount}</em> : null}
+          {t("审批")}
+          {pendingCount > 0 ? <em>{pendingCount}</em> : null}
         </button>
         <button className={tab === "artifacts" ? "on" : ""} onClick={() => setTab("artifacts")}>
-          产物
+          {t("产物")}
         </button>
       </div>
 
       {tab === "flow" && (
         <div className="sf-panel-section">
           <div className="sf-panel-title">
-            <span>步骤{steps.length > 0 ? ` · ${steps.length}` : ""}</span>
-            <button onClick={() => setDagOpen(!dagOpen)}>{dagOpen ? "收起 DAG" : "查看 DAG"}</button>
+            <span>
+              {t("步骤")}
+              {steps.length > 0 ? ` · ${steps.length}` : ""}
+            </span>
+            <button onClick={() => setDagOpen(!dagOpen)}>{dagOpen ? t("收起 DAG") : t("查看 DAG")}</button>
           </div>
           {steps.length === 0 ? (
             <p className="sf-empty">
-              暂无运行记录 —— 在对话里给团队下发任务后，这里会实时显示执行步骤。
+              {t("暂无运行记录 —— 在对话里给团队下发任务后，这里会实时显示执行步骤。")}
             </p>
           ) : (
             <div className="sf-step-tree">
@@ -1497,10 +1560,12 @@ function TaskStatusPanel({
                     </div>
                     {step.status === "done" && groupId && (
                       <button className="sf-retry" onClick={() => void retryStep(step.name, idx)}>
-                        <RotateCcw size={8} /> 重跑
+                        <RotateCcw size={8} /> {t("重跑")}
                       </button>
                     )}
-                    {step.status === "running" && <span className="sf-step-live">执行中</span>}
+                    {step.status === "running" && (
+                      <span className="sf-step-live">{t("执行中")}</span>
+                    )}
                   </div>
                   {step.substeps.map((sub, si) => (
                     <div className="sf-step-sub" key={`${sub.agent}-${si}`}>
@@ -1509,7 +1574,7 @@ function TaskStatusPanel({
                         {sub.agent}
                         {sub.slot ? ` · ${sub.slot}` : ""}
                       </p>
-                      <em className={sub.status}>{RUN_STATUS_TEXT[sub.status] ?? sub.status}</em>
+                      <em className={sub.status}>{runStatusText(sub.status)}</em>
                     </div>
                   ))}
                 </div>
@@ -1520,7 +1585,7 @@ function TaskStatusPanel({
             (dag ? (
               <SfDagRail dag={dag} />
             ) : (
-              <p className="sf-empty">暂无 DAG 数据（接口未就绪或该会话尚未运行）</p>
+              <p className="sf-empty">{t("暂无 DAG 数据（接口未就绪或该会话尚未运行）")}</p>
             ))}
         </div>
       )}
@@ -1528,7 +1593,7 @@ function TaskStatusPanel({
       {tab === "team" && (
         <div className="sf-panel-section">
           <div className="sf-panel-title">
-            <span>当前团队</span>
+            <span>{t("当前团队")}</span>
           </div>
           {(agentsList.length > 0
             ? displayAgents(agentsList).map((a) => ({
@@ -1539,7 +1604,7 @@ function TaskStatusPanel({
                 color:
                   agents.find((x) => x.name === a.name)?.color ??
                   SF_PALETTE[(a.name ?? a.agent_id).length % SF_PALETTE.length],
-                status: a.status ?? "在线",
+                status: a.status ?? t("在线"),
                 live: lastActivityOf(messages, a.name || a.agent_id),
               }))
             : agents.map((a) => ({
@@ -1549,7 +1614,7 @@ function TaskStatusPanel({
                 initials: a.initials,
                 color: a.color,
                 status: a.status,
-                live: "暂无最近活动",
+                live: t("暂无最近活动"),
               }))
           ).map((row) => (
             <div key={row.key}>
@@ -1557,42 +1622,46 @@ function TaskStatusPanel({
                 className="sf-agent-row"
                 onClick={() => setOpenAgent(openAgent === row.name ? null : row.name)}
               >
-                <AgentAvatar label={row.initials} color={row.color} small />
+                <AgentAvatar label={t(row.initials)} color={row.color} small />
                 <div>
-                  <strong>{row.name}</strong>
-                  <small>{row.role}</small>
+                  <strong>{t(row.name)}</strong>
+                  <small>{t(row.role)}</small>
                 </div>
                 <span className={row.status === "执行中" || row.status === "running" ? "running" : ""}>
-                  {row.status}
+                  {t(row.status)}
                 </span>
               </button>
               {openAgent === row.name && (
                 <div className="sf-expand-card">
-                  <p>当前：{row.live}</p>
+                  <p>{tn("当前：{v}", { v: row.live })}</p>
                 </div>
               )}
             </div>
           ))}
-          <SfLoadTag state={agentsState} okText="已连接后端" />
+          <SfLoadTag state={agentsState} okText={t("已连接后端")} />
         </div>
       )}
 
       {tab === "approval" && (
         <div className="sf-panel-section">
           <div className="sf-panel-title">
-            <span>人工审批门</span>
-            <button onClick={() => void loadApprovals()}>{pendingCount} 项待审批 · 刷新</button>
+            <span>{t("人工审批门")}</span>
+            <button onClick={() => void loadApprovals()}>
+              {tn("{n} 项待审批 · 刷新", { n: pendingCount })}
+            </button>
           </div>
           <p className="sf-appr-hint">
-            每张卡片写明正在等待审批的具体对象与影响。可直接通过 / 驳回，也可以在意见框里补充命令或说明原因。
+            {t(
+              "每张卡片写明正在等待审批的具体对象与影响。可直接通过 / 驳回，也可以在意见框里补充命令或说明原因。",
+            )}
           </p>
           {!approvalsLive && approvals.length === 0 && (
             <p className="sf-empty">
-              暂无待审批事项（审批接口不可达或该会话没有挂起的审批门）。
+              {t("暂无待审批事项（审批接口不可达或该会话没有挂起的审批门）。")}
             </p>
           )}
           {approvalsLive && approvals.length === 0 && decided.length === 0 && (
-            <p className="sf-empty">暂无待审批事项 —— Agent 交接触发审批门时会出现在这里。</p>
+            <p className="sf-empty">{t("暂无待审批事项 —— Agent 交接触发审批门时会出现在这里。")}</p>
           )}
           {[...approvals, ...decided].map((ap) => (
             <div className={`sf-appr-card ${ap.state}`} key={ap.id}>
@@ -1607,12 +1676,14 @@ function TaskStatusPanel({
               </div>
               <div className="sf-appr-target">
                 <p>
-                  <em>审批对象</em>
+                  <em>{t("审批对象")}</em>
                   <b>{ap.kind}</b>
                 </p>
                 <strong>{ap.target}</strong>
                 {ap.detail && <small>{ap.detail}</small>}
-                {ap.impact && <small className="sf-appr-impact">通过后：{ap.impact}</small>}
+                {ap.impact && (
+                  <small className="sf-appr-impact">{tn("通过后：{v}", { v: ap.impact })}</small>
+                )}
               </div>
               {ap.state === "pending" ? (
                 <>
@@ -1623,22 +1694,26 @@ function TaskStatusPanel({
                     onChange={(e: FormEvent<HTMLTextAreaElement>) =>
                       setOpinions((all) => ({ ...all, [ap.id]: e.currentTarget.value }))
                     }
-                    placeholder="意见（可选）：留空可直接通过 / 驳回；通过时可补充命令，驳回时请说明原因"
+                    placeholder={t(
+                      "意见（可选）：留空可直接通过 / 驳回；通过时可补充命令，驳回时请说明原因",
+                    )}
                   />
                   <div className="sf-appr-actions">
                     <button className="ok" onClick={() => void resolveApproval(ap.id, "approved")}>
-                      <Check size={9} /> {(opinions[ap.id] ?? "").trim() ? "通过并附意见" : "通过"}
+                      <Check size={9} />{" "}
+                      {(opinions[ap.id] ?? "").trim() ? t("通过并附意见") : t("通过")}
                     </button>
                     <button className="no" onClick={() => void resolveApproval(ap.id, "rejected")}>
-                      <X size={9} /> {(opinions[ap.id] ?? "").trim() ? "驳回并说明" : "驳回"}
+                      <X size={9} />{" "}
+                      {(opinions[ap.id] ?? "").trim() ? t("驳回并说明") : t("驳回")}
                     </button>
                   </div>
                 </>
               ) : (
                 <div className="sf-appr-log">
-                  {ap.state === "approved" ? "✅ 已批准" : "❌ 已驳回"}
-                  {ap.note ? ` · 补充命令：${ap.note}` : ""}
-                  {ap.reason ? ` · 原因：${ap.reason}` : ""}
+                  {ap.state === "approved" ? t("✅ 已批准") : t("❌ 已驳回")}
+                  {ap.note ? ` · ${t("补充命令：")}${ap.note}` : ""}
+                  {ap.reason ? ` · ${t("原因：")}${ap.reason}` : ""}
                 </div>
               )}
             </div>
@@ -1646,8 +1721,8 @@ function TaskStatusPanel({
           <div className="sf-policy-note">
             <ShieldCheck size={16} />
             <div>
-              <strong>人工审核已开启</strong>
-              <small>关键策略不会未经确认直接执行</small>
+              <strong>{t("人工审核已开启")}</strong>
+              <small>{t("关键策略不会未经确认直接执行")}</small>
             </div>
           </div>
         </div>
@@ -1656,11 +1731,13 @@ function TaskStatusPanel({
       {tab === "artifacts" && (
         <div className="sf-panel-section">
           <div className="sf-panel-title">
-            <span>产物 · {artifacts.length}</span>
-            <button onClick={() => chat.reload()}>刷新</button>
+            <span>{tn("产物 · {n}", { n: artifacts.length })}</span>
+            <button onClick={() => chat.reload()}>{t("刷新")}</button>
           </div>
           {artifacts.length === 0 && (
-            <p className="sf-empty">暂无产物 —— 运行产出的 diff、提交与文件会归并到这里。</p>
+            <p className="sf-empty">
+              {t("暂无产物 —— 运行产出的 diff、提交与文件会归并到这里。")}
+            </p>
           )}
           {artifacts.map((art) => (
             <div className="sf-art-row" key={art.id}>
@@ -1678,7 +1755,7 @@ function TaskStatusPanel({
               <div className="sf-art-actions">
                 <button
                   className={artifactsPins[art.id] ? "pin on" : "pin"}
-                  title={artifactsPins[art.id] ? "取消置顶" : "置顶"}
+                  title={artifactsPins[art.id] ? t("取消置顶") : t("置顶")}
                   onClick={() =>
                     setArtifactsPins((all) => ({ ...all, [art.id]: !all[art.id] }))
                   }
@@ -1686,7 +1763,7 @@ function TaskStatusPanel({
                   <Pin size={9} />
                 </button>
                 {art.url ? (
-                  <a href={art.url} target="_blank" rel="noreferrer" title="打开">
+                  <a href={art.url} target="_blank" rel="noreferrer" title={t("打开")}>
                     <Download size={9} />
                   </a>
                 ) : null}
@@ -1706,17 +1783,18 @@ function TaskStatusPanel({
 }
 
 function CeoHero({ onQuick }: { onQuick: (text: string) => void }) {
+  const { t } = useI18n();
   return (
     <div className="sf-ceo-hero">
       <AgentAvatar label="CEO" color="#ff5e3a" size="xl" />
-      <h2>董事长</h2>
+      <h2>{t("董事长")}</h2>
       <p>
-        <i /> 在线 · 全局调度、任务拆解与决策
+        <i /> {t("在线 · 全局调度、任务拆解与决策")}
       </p>
       <div className="sf-ceo-chips">
         {quickPrompts.map((prompt) => (
-          <button type="button" key={prompt} onClick={() => onQuick(prompt)}>
-            {prompt}
+          <button type="button" key={prompt} onClick={() => onQuick(t(prompt))}>
+            {t(prompt)}
           </button>
         ))}
       </div>
@@ -1736,6 +1814,7 @@ function ChatThread({
   onLogin: () => void;
 }) {
   const hasMessages = chat.messages.length > 0;
+  const { t } = useI18n();
   // 有 run 在飞 = 团队真在干活（spinner 状态细分 2026-11-09：转圈不再只会说「拆解中」）。
   const runsActive = chat.runs.some((r) => !isTerminalRunStatus(r.status));
 
@@ -1744,7 +1823,7 @@ function ChatThread({
     return (
       <div className="sf-empty">
         <span className="sf-empty-spinner" />
-        <p>正在加载会话记录…</p>
+        <p>{t("正在加载会话记录…")}</p>
       </div>
     );
   }
@@ -1755,10 +1834,10 @@ function ChatThread({
       <div className="sf-empty">
         <div className="sf-empty-actions">
           <button type="button" className="sf-link-btn" onClick={() => chat.reload()}>
-            重试
+            {t("重试")}
           </button>
           <button type="button" className="sf-link-btn" onClick={onLogin}>
-            登录 / 注册
+            {t("登录 / 注册")}
           </button>
         </div>
       </div>
@@ -1771,7 +1850,9 @@ function ChatThread({
       {!hasMessages && (
         <>
           <CeoHero onQuick={onQuick} />
-          <p className="sf-thread-hint">还没有消息 —— 试试上面的快捷指令，或直接输入你的第一个任务。</p>
+          <p className="sf-thread-hint">
+            {t("还没有消息 —— 试试上面的快捷指令，或直接输入你的第一个任务。")}
+          </p>
         </>
       )}
       {/* 正常态：真实时间线（全部 TimelineMessage kind） */}
@@ -1780,7 +1861,7 @@ function ChatThread({
       {chat.error && hasMessages && (
         <div className="sf-inline-error">
           <button type="button" className="sf-link-btn" onClick={() => chat.reload()}>
-            重试
+            {t("重试")}
           </button>
         </div>
       )}
@@ -1794,19 +1875,19 @@ function ChatThread({
           <p>
             {chat.typing ? (
               <>
-                <strong>{chat.typing}</strong> 正在生成回复
+                <strong>{chat.typing}</strong> {t("正在生成回复")}
               </>
             ) : chat.waitingApproval ? (
               <>
-                <strong>等待你审批</strong> · 团队已暂停，批/拒后继续（任务面板可操作）
+                <strong>{t("等待你审批")}</strong> · {t("团队已暂停，批/拒后继续（任务面板可操作）")}
               </>
             ) : runsActive ? (
               <>
-                <strong>Agent 团队</strong> 执行中，过程卡实时推进
+                <strong>{t("Agent 团队")}</strong> {t("执行中，过程卡实时推进")}
               </>
             ) : (
               <>
-                <strong>Agent</strong> 正在拆解任务并调度团队
+                <strong>Agent</strong> {t("正在拆解任务并调度团队")}
               </>
             )}
           </p>
@@ -1818,13 +1899,14 @@ function ChatThread({
 
 /** 小红书 Logo（2026-11-10）：红底圆角方块 + 白色「小红书」字样，加号旁连接器徽标。 */
 function XhsIcon({ size = 16 }: { size?: number }) {
+  const { t } = useI18n();
   return (
     <svg
       width={size}
       height={size}
       viewBox="0 0 24 24"
       role="img"
-      aria-label="小红书"
+      aria-label={t("小红书")}
       style={{ display: "block", borderRadius: 5 }}
     >
       <rect width="24" height="24" rx="5" fill="#ff2442" />

@@ -20,14 +20,15 @@ import {
   SfLoadState,
   SfLoadTag,
 } from "./shared";
+import { translate, translateN, useI18n } from "../i18n";
 
 /** 备忘日期徽标：逾期/今天/未来三态（类日程）。 */
 function memoDueInfo(due: string | null): { label: string; tone: "over" | "today" | "future" } | null {
   if (!due) return null;
   const now = new Date();
   const t = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
-  if (due < t) return { label: `已逾期 · ${due}`, tone: "over" };
-  if (due === t) return { label: `今天 · ${due}`, tone: "today" };
+  if (due < t) return { label: translateN("已逾期 · {date}", { date: due }), tone: "over" };
+  if (due === t) return { label: translateN("今天 · {date}", { date: due }), tone: "today" };
   return { label: due, tone: "future" };
 }
 
@@ -41,6 +42,7 @@ export function MemosView() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+  const { t, tn } = useI18n();
 
   const loadMemos = useCallback(() => {
     setMemosState("loading");
@@ -68,20 +70,21 @@ export function MemosView() {
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const t = title.trim();
-    if (!t) return;
+    // 局部变量原名 t（标题），与翻译函数 t 冲突 → 改名 titleText。
+    const titleText = title.trim();
+    if (!titleText) return;
     setSaving(true);
     setFormError(null);
     try {
       if (editingId) {
-        await updateMemo(editingId, { title: t, note: note.trim(), due_at: due || null });
+        await updateMemo(editingId, { title: titleText, note: note.trim(), due_at: due || null });
       } else {
-        await createMemo({ title: t, note: note.trim(), due_at: due || null });
+        await createMemo({ title: titleText, note: note.trim(), due_at: due || null });
       }
       resetForm();
       loadMemos();
     } catch (err) {
-      setFormError(err instanceof Error ? err.message : "保存失败，请重试");
+      setFormError(err instanceof Error ? err.message : t("保存失败，请重试"));
     } finally {
       setSaving(false);
     }
@@ -100,18 +103,18 @@ export function MemosView() {
       await updateMemo(m.memo_id, { done: !m.done });
       loadMemos();
     } catch (err) {
-      setFormError(err instanceof Error ? err.message : "更新失败，请重试");
+      setFormError(err instanceof Error ? err.message : t("更新失败，请重试"));
     }
   }
 
   async function removeMemo(m: SfMemo) {
-    if (!window.confirm(`删除备忘「${m.title}」？`)) return;
+    if (!window.confirm(tn("删除备忘「{title}」？", { title: m.title }))) return;
     try {
       await deleteMemo(m.memo_id);
       if (editingId === m.memo_id) resetForm();
       loadMemos();
     } catch (err) {
-      setFormError(err instanceof Error ? err.message : "删除失败，请重试");
+      setFormError(err instanceof Error ? err.message : t("删除失败，请重试"));
     }
   }
 
@@ -122,8 +125,8 @@ export function MemosView() {
       <div className="sf-subview-intro">
         <div>
           <p>MEMO · SCHEDULE</p>
-          <h1>工作备忘</h1>
-          <span>个人日程与备忘，随手增删。</span>
+          <h1>{t("工作备忘")}</h1>
+          <span>{t("个人日程与备忘，随手增删。")}</span>
         </div>
       </div>
       <SfLoadTag state={memosState} />
@@ -131,7 +134,7 @@ export function MemosView() {
         <input
           autoFocus
           maxLength={200}
-          placeholder="备忘标题（必填）"
+          placeholder={t("备忘标题（必填）")}
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           disabled={saving}
@@ -141,32 +144,36 @@ export function MemosView() {
           value={due}
           onChange={(e) => setDue(e.target.value)}
           disabled={saving}
-          title="日期（可选）"
+          title={t("日期（可选）")}
         />
         <input
           maxLength={2000}
-          placeholder="备注（可选）"
+          placeholder={t("备注（可选）")}
           value={note}
           onChange={(e) => setNote(e.target.value)}
           disabled={saving}
         />
         <button type="submit" disabled={saving || !title.trim()}>
-          {saving ? "保存中…" : editingId ? "保存修改" : "添加"}
+          {saving ? t("保存中…") : editingId ? t("保存修改") : t("添加")}
         </button>
         {editingId && (
           <button type="button" onClick={resetForm} disabled={saving}>
-            <X size={15} /> 取消
+            <X size={15} /> {t("取消")}
           </button>
         )}
         {formError && <span className="sf-inline-create-error">{formError}</span>}
       </form>
       {memosState === "ready" && (
         <p className="sf-memo-stats">
-          共 {list.length} 条 · 待办 {openCount} 条 · 已完成 {list.length - openCount} 条
+          {tn("共 {n} 条 · 待办 {a} 条 · 已完成 {b} 条", {
+            n: list.length,
+            a: openCount,
+            b: list.length - openCount,
+          })}
         </p>
       )}
       {memosState === "ready" && list.length === 0 && (
-        <p className="sf-biz-empty">还没有备忘 —— 在上方填一条，点「添加」</p>
+        <p className="sf-biz-empty">{t("还没有备忘 —— 在上方填一条，点「添加」")}</p>
       )}
       <ul className="sf-memo-list">
         {list.map((m) => {
@@ -176,7 +183,7 @@ export function MemosView() {
               <button
                 className="sf-memo-check"
                 onClick={() => toggleDone(m)}
-                title={m.done ? "标记为待办" : "标记完成"}
+                title={m.done ? t("标记为待办") : t("标记完成")}
               >
                 {m.done ? "✓" : ""}
               </button>
@@ -188,10 +195,10 @@ export function MemosView() {
                 {m.note && <p>{m.note}</p>}
               </div>
               <div className="sf-memo-actions">
-                <button onClick={() => startEdit(m)} title="编辑">
+                <button onClick={() => startEdit(m)} title={t("编辑")}>
                   <Pencil size={13} />
                 </button>
-                <button onClick={() => removeMemo(m)} title="删除">
+                <button onClick={() => removeMemo(m)} title={t("删除")}>
                   <Trash2 size={13} />
                 </button>
               </div>

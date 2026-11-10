@@ -10,6 +10,7 @@ import {
 import {
   stripMarkdown,
 } from "../markdown";
+import { translate, translateN } from "../i18n";
 
 /** 数据加载三态（加载中 / 成功 / 失败）：各视图状态标签统一入口，
  *  避免把「加载中」与「加载失败」混为一态而在加载过程闪现错误提示。 */
@@ -21,16 +22,18 @@ export function SfLoadTag({ state, okText }: { state: SfLoadState; okText?: stri
   return okText ? <p className="sf-live-tag on">{okText}</p> : null;
 }
 
-/** 相对时间（会话列表用）：刚刚 / N 分钟前 / N 小时前 / 昨天 / MM/DD。 */
+/** 相对时间（会话列表用）：刚刚 / N 分钟前 / N 小时前 / 昨天 / MM/DD。
+ *  文案随界面语言（2026-11-10 双语收尾）：translateN 直读当前偏好，
+ *  调用方组件重渲染时会拿到新语言。 */
 export function fmtRelativeTime(iso?: string | number | null): string {
   if (iso == null || iso === "") return "";
   const ts = typeof iso === "number" ? iso : Date.parse(String(iso));
   if (!Number.isFinite(ts)) return "";
   const diff = Date.now() - ts;
-  if (diff < 60_000) return "刚刚";
-  if (diff < 3600_000) return `${Math.floor(diff / 60_000)} 分钟前`;
-  if (diff < 86400_000) return `${Math.floor(diff / 3600_000)} 小时前`;
-  if (diff < 172800_000) return "昨天";
+  if (diff < 60_000) return translate("刚刚");
+  if (diff < 3600_000) return translateN("{n} 分钟前", { n: Math.floor(diff / 60_000) });
+  if (diff < 86400_000) return translateN("{n} 小时前", { n: Math.floor(diff / 3600_000) });
+  if (diff < 172800_000) return translate("昨天");
   const d = new Date(ts);
   return `${String(d.getMonth() + 1).padStart(2, "0")}/${String(d.getDate()).padStart(2, "0")}`;
 }
@@ -40,7 +43,7 @@ export function groupPreview(group: GroupRecord): string {
   const msgs = Array.isArray(group.messages) ? group.messages : [];
   const last = msgs[msgs.length - 1];
   const content = stripMarkdown(userVisibleText((last?.content ?? "").trim())).replace(/\s+/g, " ");
-  if (!content) return "还没有消息";
+  if (!content) return translate("还没有消息");
   return content.length > 32 ? `${content.slice(0, 32)}…` : content;
 }
 
