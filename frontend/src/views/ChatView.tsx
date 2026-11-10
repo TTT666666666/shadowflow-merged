@@ -26,6 +26,7 @@ import {
   Send,
   ShieldCheck,
   Sparkles,
+  Trash2,
   X,
   Zap,
   AlertTriangle,
@@ -114,6 +115,8 @@ export interface ChatViewScope {
   filteredConversations: GroupRecord[];
   groups: GroupRecord[];
   openGroup: (group: GroupRecord) => void;
+  /** 删除会话（右键菜单触发；后端 204，删完由调用方刷新列表）。 */
+  deleteConversation: (group: GroupRecord) => Promise<void>;
   activeGroupId: string | null;
   projectsTree: SfProject[];
   agentsList: AgentRecord[];
@@ -156,6 +159,116 @@ export interface ChatViewScope {
   dragOver: boolean;
 }
 
+/**
+ * 会话列表行（2026-11-10）。
+ *
+ * 抽成独立组件只为承载「右键删除」：菜单的开合、坐标、二次确认都是行内状态，
+ * 放在 renderChatView 顶层会被任意一次列表刷新重置。
+ *
+ * 菜单用 fixed 定位 + 全屏透明遮罩关闭，避免被侧栏 overflow 裁掉；
+ * 删除走两步（「删除对话」→「确认删除」），与页面内其他危险操作口径一致。
+ * Fragment 不产生 DOM 节点，因此既有的 `.sf-thread-panel button` 结构选择器不受影响。
+ */
+function ConversationRow({
+  group,
+  active,
+  onOpen,
+  onDelete,
+}: {
+  group: GroupRecord;
+  active: boolean;
+  onOpen: () => void;
+  onDelete: () => Promise<void>;
+}) {
+  const [menuAt, setMenuAt] = useState<{ x: number; y: number } | null>(null);
+  const [confirming, setConfirming] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  const closeMenu = useCallback(() => {
+    setMenuAt(null);
+    setConfirming(false);
+  }, []);
+
+  useEffect(() => {
+    if (!menuAt) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") closeMenu();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [menuAt, closeMenu]);
+
+  return (
+    <>
+      <button
+        className={active ? "active" : ""}
+        onClick={onOpen}
+        onContextMenu={(event) => {
+          event.preventDefault();
+          // 菜单约 176×96，贴右/下边时向内收，避免超出视口
+          setConfirming(false);
+          setMenuAt({
+            x: Math.min(event.clientX, Math.max(8, window.innerWidth - 192)),
+            y: Math.min(event.clientY, Math.max(8, window.innerHeight - 112)),
+          });
+        }}
+      >
+        <span className="sf-conversation-icon">
+          <MessageSquare size={12} />
+          {group.kind === "dm" && <i />}
+        </span>
+        <span>
+          <strong>{group.name || "未命名会话"}</strong>
+          <small>{groupPreview(group)}</small>
+        </span>
+        <time>{fmtRelativeTime(groupActivityIso(group))}</time>
+      </button>
+      {menuAt && (
+        <>
+          <div
+            className="sf-ctx-backdrop"
+            onClick={closeMenu}
+            onContextMenu={(event) => {
+              event.preventDefault();
+              closeMenu();
+            }}
+          />
+          <div className="sf-ctx-menu" style={{ left: menuAt.x, top: menuAt.y }} role="menu">
+            {confirming ? (
+              <>
+                <p className="sf-ctx-warn">删除后聊天记录不可恢复</p>
+                <button
+                  className="sf-ctx-danger"
+                  role="menuitem"
+                  disabled={deleting}
+                  onClick={() => {
+                    setDeleting(true);
+                    void onDelete().finally(() => {
+                      setDeleting(false);
+                      closeMenu();
+                    });
+                  }}
+                >
+                  <Trash2 size={13} />
+                  {deleting ? "删除中…" : "确认删除"}
+                </button>
+                <button role="menuitem" onClick={closeMenu}>
+                  取消
+                </button>
+              </>
+            ) : (
+              <button className="sf-ctx-danger" role="menuitem" onClick={() => setConfirming(true)}>
+                <Trash2 size={13} />
+                删除对话
+              </button>
+            )}
+          </div>
+        </>
+      )}
+    </>
+  );
+}
+
 export function renderChatView(scope: ChatViewScope) {
   const {
     panelOpen,
@@ -180,6 +293,7 @@ export function renderChatView(scope: ChatViewScope) {
     filteredConversations,
     groups,
     openGroup,
+    deleteConversation,
     activeGroupId,
     projectsTree,
     agentsList,
@@ -356,21 +470,13 @@ export function renderChatView(scope: ChatViewScope) {
                     </p>
                   )}
                   {filteredConversations.map((group) => (
-                    <button
+                    <ConversationRow
                       key={group.group_id}
-                      className={activeGroupId === group.group_id ? "active" : ""}
-                      onClick={() => openGroup(group)}
-                    >
-                      <span className="sf-conversation-icon">
-                        <MessageSquare size={12} />
-                        {group.kind === "dm" && <i />}
-                      </span>
-                      <span>
-                        <strong>{group.name || "未命名会话"}</strong>
-                        <small>{groupPreview(group)}</small>
-                      </span>
-                      <time>{fmtRelativeTime(groupActivityIso(group))}</time>
-                    </button>
+                      group={group}
+                      active={activeGroupId === group.group_id}
+                      onOpen={() => openGroup(group)}
+                      onDelete={() => deleteConversation(group)}
+                    />
                   ))}
                 </div>
                 <p>项目与 Agent</p>

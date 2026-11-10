@@ -41,6 +41,7 @@ import {
   CHAT_UPLOAD_MAX_BYTES,
   createGroup,
   createProject,
+  deleteGroup,
   listAgents,
   listGroups,
   listProjects,
@@ -387,6 +388,31 @@ export default function ProductApp() {
     setView("chat");
     setMobileRailOpen(false);
     if (window.innerWidth <= 820) setPanelOpen(false);
+  }
+
+  /**
+   * 删除会话（2026-11-10，右键菜单触发）。
+   *
+   * 后端 `DELETE /api/groups/{id}` 对 group / dm 一视同仁，直接删持久化 JSON。
+   * 三层收尾必须都做，否则会留下「删了但还在」的假象：
+   *   1) 删的是当前会话 → 先清 activeGroupId，避免 timeline 轮询打到 404 把界面卡死；
+   *   2) 重拉列表，侧栏不再显示；
+   *   3) 失败不静默，用 toast 告知（常见是游客身份下删别人的会话 → 403/404）。
+   */
+  async function deleteConversation(group: GroupRecord) {
+    try {
+      await deleteGroup(group.group_id);
+    } catch (err) {
+      const detail = err instanceof Error ? err.message : String(err);
+      showNotice(`删除对话失败：${detail}`);
+      return;
+    }
+    if (activeGroupId === group.group_id) {
+      setActiveGroupId(null);
+      setActiveTitle("选择或新建一个会话");
+    }
+    await reloadGroups();
+    showNotice("已删除对话");
   }
 
   /** 「董事长」置顶：resolve DM（总经理 agent-shadow-secretary）→ 打开；失败回落第一个 agent 的 DM。 */
@@ -1049,6 +1075,7 @@ export default function ProductApp() {
           filteredConversations,
           groups,
           openGroup,
+          deleteConversation,
           activeGroupId,
           projectsTree,
           agentsList,

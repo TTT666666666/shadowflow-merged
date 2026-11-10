@@ -15,6 +15,18 @@
     background: #17162d;
     color: #17162d;
     font-family: "Noto Sans SC", sans-serif;
+    /* 2026-11-10：整站禁止鼠标框选文字 —— 拖拽/双击不再出现蓝色选区，
+       避免界面上到处是被选区染蓝的碎片。输入类元素在下面单独放开，
+       否则输入框内连自己刚打的字都选不了、改不动。 */
+    -webkit-user-select: none;
+    user-select: none;
+  }
+  input,
+  textarea,
+  select,
+  [contenteditable="true"] {
+    -webkit-user-select: text;
+    user-select: text;
   }
   button,
   a,

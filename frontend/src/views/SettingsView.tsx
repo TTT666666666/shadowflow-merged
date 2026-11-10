@@ -31,6 +31,15 @@ import {
   agents,
   sfFetch,
 } from "./shared";
+import {
+  AdvancedSection,
+  AgentProfileSection,
+  AppearanceSection,
+  HandoffSection,
+  LanguageSection,
+  NotificationSection,
+  ProfileSection,
+} from "./settings-sections";
 
 type ByokProviderData = {
   apiKey: string;
@@ -864,6 +873,20 @@ export function SettingsView() {
           <CreditsUsageSection />
         ) : section === "用户管理" ? (
           <AdminUsersSection />
+        ) : section === "个人资料" ? (
+          <ProfileSection />
+        ) : section === "主题与显示" ? (
+          <AppearanceSection />
+        ) : section === "语言" ? (
+          <LanguageSection />
+        ) : section === "Agent 画像" ? (
+          <AgentProfileSection />
+        ) : section === "交接与写回" ? (
+          <HandoffSection />
+        ) : section === "通知" ? (
+          <NotificationSection />
+        ) : section === "高级设置" ? (
+          <AdvancedSection />
         ) : (
           <div className="sf-settings-placeholder">
             <Settings size={25} />

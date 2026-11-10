@@ -496,6 +496,17 @@ export async function createGroup(payload: {
   });
 }
 
+/**
+ * 删除会话（群聊与单聊同一条记录）。
+ *
+ * 后端 `DELETE /api/groups/{id}` 返回 204 无响应体，`apiFetch` 此时返回
+ * undefined，不需要额外解析。404 代表已经被删过（多端同时操作），
+ * 由调用方决定是否当作成功处理。
+ */
+export async function deleteGroup(groupId: string): Promise<void> {
+  await apiFetch<void>(`/api/groups/${encodeURIComponent(groupId)}`, { method: "DELETE" });
+}
+
 export async function getTimeline(groupId: string): Promise<TimelineResponse> {
   return apiFetch<TimelineResponse>(`/api/groups/${encodeURIComponent(groupId)}/timeline`);
 }
