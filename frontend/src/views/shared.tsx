@@ -114,9 +114,29 @@ export const agents = [
 /** 后端内置的调度中枢 / 服务账号不计入「AI 员工」展示（员工恒为 6 名部门核心员工）。 */
 export const HIDDEN_AGENT_IDS = new Set(["agent-shadow-secretary"]);
 
-/** 「AI 员工」展示口径：API 列表过滤掉内置中枢与秘书。 */
+/**
+ * 「AI 员工」展示口径：API 列表过滤掉内置中枢与秘书，并按名字去重。
+ *
+ * 2026-11-10 —— 同岗位出现两条（市场分析师 ×2、商务专员 ×2…）：`craft-team-setup`
+ * 当时无条件 POST 新 agent，而 Python 侧早有 6 个同名种子，于是同一岗位落了两份、
+ * 分别挂在两个团队下。数据层已按 id 合并（scripts/dedupe-agents.mjs），这里再按
+ * 名字兜一层：同名只留第一条，**任何来源**（旧数据、重复播种、用户手建重名）都不
+ * 会再在侧栏出现两行。
+ */
 export function displayAgents(list: AgentRecord[]): AgentRecord[] {
-  return list.filter((a) => !HIDDEN_AGENT_IDS.has(String(a.agent_id ?? "")));
+  const seen = new Set<string>();
+  const out: AgentRecord[] = [];
+  for (const a of list) {
+    if (HIDDEN_AGENT_IDS.has(String(a.agent_id ?? ""))) continue;
+    const key = (a.name ?? "").trim();
+    // 无名记录（只有 id）不参与去重，避免误吞
+    if (key) {
+      if (seen.has(key)) continue;
+      seen.add(key);
+    }
+    out.push(a);
+  }
+  return out;
 }
 
 /** composer 附件条目（2026-11-07 对话框拖拽传图）：上传中/成功/失败三态可见。 */

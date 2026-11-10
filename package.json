@@ -13,6 +13,7 @@
     "contracts:gen": "python scripts/generate_ts_types.py",
     "contracts:check": "python scripts/check_contracts.py",
     "gate": "node scripts/pre-delivery.mjs",
-    "gate:fast": "node scripts/pre-delivery.mjs --fast"
+    "gate:fast": "node scripts/pre-delivery.mjs --fast",
+    "agents:dedupe": "node scripts/dedupe-agents.mjs"
   }
 }

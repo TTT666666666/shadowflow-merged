@@ -87,7 +87,7 @@ import {
   SfProject,
   SF_PALETTE,
 } from "./shared";
-import { translate, translateN, useI18n } from "../i18n";
+import { agentSubtitle, translate, translateN, useI18n } from "../i18n";
 
 // ── chat 视图闭包管道（行为保持拆分）─────────────────────────────────
 // ProductApp 顶层 state/handler 经 ChatViewScope 值传递注入；
@@ -553,7 +553,7 @@ export function renderChatView(scope: ChatViewScope) {
                       />
                       <span>
                         <strong>{t(agent.name || agent.agent_id)}</strong>
-                        <small>{t(agent.soul || agent.role || "Agent")}</small>
+                        <small>{agentSubtitle(agent.name, t)}</small>
                       </span>
                       <i className={agent.status === "执行中" ? "working" : ""} />
                     </button>
@@ -1599,7 +1599,7 @@ function TaskStatusPanel({
             ? displayAgents(agentsList).map((a) => ({
                 key: a.agent_id,
                 name: a.name || a.agent_id,
-                role: a.soul || a.role || "Agent",
+                role: agentSubtitle(a.name, t),
                 initials: (a.name || a.agent_id).slice(0, 2).toUpperCase(),
                 color:
                   agents.find((x) => x.name === a.name)?.color ??

@@ -190,7 +190,7 @@ export default function ProductApp() {
   // ── 侧边栏「新建」菜单（2026-11-08 做全）：对话/项目都接真实后端创建 ──
   const [newMenuOpen, setNewMenuOpen] = useState(false);
   const [newMenuView, setNewMenuView] = useState<"root" | "project">("root");
-  const [creatingConversation, setCreatingConversation] = useState(false);
+  // 新建对话已改懒建群（2026-11-10）：不再有异步建群，故没有「创建中」态。
   const [creatingProject, setCreatingProject] = useState(false);
   const newMenuRef = useRef<HTMLDivElement | null>(null);
   const composerRef = useRef<HTMLTextAreaElement | null>(null);
@@ -351,13 +351,17 @@ export default function ProductApp() {
             ? tn("{name} 正在输入…", { name: chat.typing })
             : t("会话在线");
 
-  const filteredConversations = useMemo(
-    () =>
-      groups.filter((group) =>
-        `${group.name ?? ""}${groupPreview(group)}`.toLowerCase().includes(query.toLowerCase()),
-      ),
-    [groups, query],
-  );
+  const filteredConversations = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return groups.filter((group) => {
+      // 2026-11-10 —— 空会话不进「最近对话」：只点「新建」没发消息的会话不落「历史」。
+      // 数据层已改为懒建群（见 createConversation），这里再兜一层旧数据：库里已有的
+      // 零消息会话也不显示，除非它就是当前打开的会话（否则刚点开就消失，很诡异）。
+      const msgs = Array.isArray(group.messages) ? group.messages : [];
+      if (msgs.length === 0 && group.group_id !== activeGroupId) return false;
+      return `${group.name ?? ""}${groupPreview(group)}`.toLowerCase().includes(q);
+    });
+  }, [groups, query, activeGroupId]);
 
   // 搜索做全（2026-11-08）：placeholder 承诺「搜索对话、项目或 Agent」，
   // 此前只过滤对话。项目按 名称/会话标题 匹配，Agent 按 名称/ID 匹配。
@@ -467,37 +471,23 @@ export default function ProductApp() {
     return [...new Set(list.map((a) => String(a.agent_id ?? "")).filter(Boolean))].slice(0, 8);
   }
 
-  /** 新建对话 → POST /api/groups（真实建群）后进入。
-   *  2026-11-08 做全：创建中态 + 失败可见（不再静默吞掉，之前「点了没反应」的根因）
-   *  + 网关瞬断自动重试一次（tsx watch 热重启窗口期会 5xx/fetch 失败）+ 成功聚焦输入框接上发送。 */
+  /**
+   * 新建对话（2026-11-10 改懒建群）。
+   *
+   * 此前一点「新建」就 `POST /api/groups`，于是「最近对话」里立刻多出一条空会话——
+   * 用户只是想看看输入框、或放弃输入，都会留下垃圾记录，得手动右键删。现在改成
+   * **纯前端草稿态**：只清空当前会话、把焦点放到输入框；真正的落库推迟到首条消息
+   * 发出时才发生（`sendText` 里 `!activeGroupId` 分支，那条路径本来就有）。
+   *
+   * 顺带的好处：不再有「创建中…」的假等待，也不会有建群失败 toast 打断输入。
+   */
   async function createConversation() {
-    if (creatingConversation) return;
-    setCreatingConversation(true);
-    const name = tn("新对话 {n}", { n: groups.length + 1 });
-    try {
-      const group = await withRetry(async () =>
-        createGroup({
-          name: name.slice(0, 40),
-          kind: "group",
-          agent_ids: await defaultGroupAgentIds(),
-        }),
-      );
-      if (group?.group_id) {
-        setActiveGroupId(group.group_id);
-        setActiveTitle(group.name || name);
-        await reloadGroups();
-        setNewMenuOpen(false);
-        setNewMenuView("root");
-        window.setTimeout(() => composerRef.current?.focus(), 0);
-        return;
-      }
-      showNotice(t("创建对话失败：后端未返回会话 ID，请重试"));
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
-      showNotice(tn("创建对话失败：{msg}（后端可达后可再次点击「新建」重试）", { msg }));
-    } finally {
-      setCreatingConversation(false);
-    }
+    setActiveGroupId(null);
+    setActiveTitle(t("新对话"));
+    setView("chat");
+    setNewMenuOpen(false);
+    setNewMenuView("root");
+    window.setTimeout(() => composerRef.current?.focus(), 0);
   }
 
   /** 新建项目 → POST /api/projects，成功刷新侧边栏项目树。 */
@@ -1062,7 +1052,7 @@ export default function ProductApp() {
           newMenuOpen,
           newMenuView,
           setNewMenuView,
-          creatingConversation,
+          creatingConversation: false,
           createConversation,
           handleCreateProject,
           creatingProject,

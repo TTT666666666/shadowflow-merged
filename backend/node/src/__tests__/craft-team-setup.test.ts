@@ -32,10 +32,18 @@ interface Call {
   body: Record<string, unknown> | null;
 }
 
-/** 假 Python：agents/teams/groups 记忆化创建，GET 回读。预置内置「总经理」。 */
-function stubPy(calls: Call[], opts: { failAgents?: boolean } = {}) {
+/**
+ * 假 Python：agents/teams/groups 记忆化创建，GET 回读。预置内置「总经理」。
+ * `existing` 用来模拟库里**已有**的同名岗位（复用以防重复建人的回归用）。
+ */
+function stubPy(calls: Call[], opts: { failAgents?: boolean; existing?: string[] } = {}) {
   const agents: Array<{ agent_id: string; name: string; soul: string }> = [
     { agent_id: 'agent-shadow-secretary', name: '总经理', soul: '主控（内置秘书）' },
+    ...(opts.existing ?? []).map((name, i) => ({
+      agent_id: `seed-${i + 1}`,
+      name,
+      soul: `旧话术：${name}`,
+    })),
   ];
   const teams = new Map<string, Record<string, unknown>>();
   const groups = new Map<string, Record<string, unknown>>();
@@ -49,6 +57,9 @@ function stubPy(calls: Call[], opts: { failAgents?: boolean } = {}) {
       const ok = (data: unknown) => ({ ok: true, json: async () => ({ data }) });
       const notFound = { ok: false, json: async () => ({}) };
 
+      if (u.endsWith('/api/agents') && method === 'GET') {
+        return ok(agents);
+      }
       if (u.endsWith('/api/agents') && method === 'POST') {
         if (opts.failAgents) return notFound;
         const rec = {
@@ -208,6 +219,29 @@ describe('setupCraftTeam — 代卖团队搭建（总经理带队）', () => {
     for (const c of soulPatches) {
       expect(String(c.body?.soul ?? '')).toContain('[intake]');
     }
+  });
+
+  it('同名复用（2026-11-10 修重复）：库里已有 6 岗位 → 不新建，改为 PATCH 刷新 soul', async () => {
+    const calls: Call[] = [];
+    stubPy(calls, {
+      existing: ['市场分析师', '品牌策划师', '内容策划师', '合规审核员', '运营专员', '商务专员'],
+    });
+    const r = await setupMod.setupCraftTeam();
+    // 一个都不新建 —— 这正是历史上出现「同名两行」的根因
+    expect(calls.filter((c) => c.method === 'POST' && c.url.endsWith('/api/agents'))).toHaveLength(0);
+    expect(r.agent_ids).toEqual([
+      'agent-shadow-secretary',
+      'seed-1',
+      'seed-2',
+      'seed-3',
+      'seed-4',
+      'seed-5',
+      'seed-6',
+    ]);
+    // 复用路径仍要把最新话术刷进去
+    const patches = calls.filter((c) => c.method === 'PATCH' && /\/api\/agents\//.test(c.url));
+    expect(patches).toHaveLength(6);
+    for (const c of patches) expect(String(c.body?.soul ?? '')).toContain('[intake]');
   });
 
   it('Python 不可达 → CraftProfitError 上抛（setup 是显式动作不 fail-soft）', async () => {

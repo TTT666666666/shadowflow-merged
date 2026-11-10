@@ -138,6 +138,39 @@ ${PROTOCOL}`,
   },
 ];
 
+/**
+ * 建人 = 按名字复用（2026-11-10 修重复 Agent）。
+ *
+ * 历史 bug：这里对 6 个岗位无条件 `POST /api/agents`，而 Python 侧早已播种了 6 个
+ * 同名 agent（`seed-ai-marketing-org`），于是每次「重新搭建」都在库里多出一套同岗位
+ * 的 quick_hire 记录 —— 界面上就是「市场分析师」出现两行、各自挂着不同团队。
+ *
+ * 现在改为：先列出全部 agent，同名（同 workspace）就复用其 id 并 PATCH 最新 soul
+ * （话术迭代仍需生效），只有真的不存在时才新建。同名判定用 name + workspace_id，
+ * 避免跨工作区误并。
+ */
+async function reuseOrCreateAgent(name: string, soul: string): Promise<string> {
+  const list = await pyJson<PyAgentRecord[]>('/api/agents');
+  const sameName = Array.isArray(list)
+    ? list.find((a) => a.name === name && (a.workspace_id ?? 'default') === 'default')
+    : undefined;
+  const existingId = sameName?.agent_id ?? sameName?.id;
+  if (existingId) {
+    await pyJson(`/api/agents/${encodeURIComponent(existingId)}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ soul }),
+    });
+    return existingId;
+  }
+  const created = await pyJson<PyAgentRecord>('/api/agents', {
+    method: 'POST',
+    body: JSON.stringify({ name, soul, workspace_id: 'default' }),
+  });
+  const id = created?.agent_id ?? created?.id;
+  if (!id) throw new CraftProfitError(`建 agent「${name}」失败（Python 后端未就绪？）`, 502);
+  return id;
+}
+
 export interface CraftTeamSetupResult {
   created: boolean;
   team_id: string;
@@ -151,6 +184,7 @@ interface PyAgentRecord {
   agent_id?: string;
   id?: string;
   name?: string;
+  workspace_id?: string | null;
 }
 
 interface PyTeamRecord {
@@ -220,15 +254,7 @@ export async function setupCraftTeam(): Promise<CraftTeamSetupResult> {
   }
   const agentIds: string[] = [];
   for (const role of ROLES) {
-    const created = await pyJson<PyAgentRecord>('/api/agents', {
-      method: 'POST',
-      body: JSON.stringify({ name: role.name, soul: role.soul, workspace_id: 'default' }),
-    });
-    const id = created?.agent_id ?? created?.id;
-    if (!id) {
-      throw new CraftProfitError(`建 agent「${role.name}」失败（Python 后端未就绪？）`, 502);
-    }
-    agentIds.push(id);
+    agentIds.push(await reuseOrCreateAgent(role.name, role.soul));
   }
   // 队伍名单：总经理 CEO 打头（workflow n1），6 部门随后。
   const roster = [SECRETARY_AGENT_ID, ...agentIds];

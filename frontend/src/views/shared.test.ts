@@ -114,6 +114,32 @@ describe("displayAgents", () => {
   it("空列表返回空", () => {
     expect(displayAgents([])).toEqual([]);
   });
+
+  it("同名去重：同岗位两条只留第一条（2026-11-10 重复 Agent 事故）", () => {
+    const list = [
+      { agent_id: "seed-market", name: "市场分析师" } as AgentRecord,
+      { agent_id: "agent-9e1117191eb8", name: "市场分析师" } as AgentRecord,
+      { agent_id: "seed-brand", name: "品牌策划师" } as AgentRecord,
+      { agent_id: "agent-b7b4d087d240", name: "品牌策划师" } as AgentRecord,
+    ];
+    expect(displayAgents(list).map((a) => a.agent_id)).toEqual(["seed-market", "seed-brand"]);
+  });
+
+  it("去重不吞无名记录（只有 id 的照常展示）", () => {
+    const list = [
+      { agent_id: "x1", name: "" } as AgentRecord,
+      { agent_id: "x2", name: "" } as AgentRecord,
+    ];
+    expect(displayAgents(list).map((a) => a.agent_id)).toEqual(["x1", "x2"]);
+  });
+
+  it("名字两端空白不造成漏判", () => {
+    const list = [
+      { agent_id: "a", name: "运营专员" } as AgentRecord,
+      { agent_id: "b", name: " 运营专员 " } as AgentRecord,
+    ];
+    expect(displayAgents(list).map((a) => a.agent_id)).toEqual(["a"]);
+  });
 });
 
 describe("sfFetch", () => {

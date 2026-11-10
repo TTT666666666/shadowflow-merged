@@ -571,6 +571,16 @@ const EN: Record<string, string> = {
   "商品资料、上架准备、店铺运营支持": "Product data, listing prep, store operations",
   "企业采购材料、潜在客户筛选跟进": "B2B procurement decks, lead screening and follow-up",
   "内容合规、授权、品牌伦理和质量检查": "Content compliance, licensing, brand ethics and QA",
+  // 岗位副标题（部门 · 职责）：soul 是系统提示词，不能直接上界面，改渲染结构化摘要
+  管理层: "Leadership",
+  市场研究部: "Market research",
+  品牌策划部: "Brand planning",
+  内容创作部: "Content creation",
+  风控审核部: "Risk & compliance",
+  电商运营部: "E-commerce ops",
+  商务拓展部: "Business development",
+  统筹调度与决策: "Orchestration and decisions",
+  "自定义 Agent": "Custom agent",
   // 头像缩写（中文环境用两字，英文环境退化成角色缩写）
   市场: "MA",
   品牌: "BP",
@@ -752,6 +762,34 @@ export function useI18n(): {
       interpolate(en ? EN[zh] ?? zh : zh, vars),
     isEn: en,
   };
+}
+
+/**
+ * 岗位 → 部门 + 职责（2026-11-10）。
+ *
+ * 为什么不在界面上渲染 `agent.soul`：soul 是**系统提示词**（含输出协议、汇报线、
+ * 纪律约束），此前被当成「一句话介绍」直接截断显示，结果是切英文后仍是一屏中文，
+ * 而且把内部提示词漏给了用户。这里改成结构化摘要，中英各一份，随语言切换。
+ *
+ * 未命中（用户自建 Agent）→ 「自定义 Agent」：宁可显示中性词，也不把中文提示词
+ * 硬塞进英文界面。
+ */
+const AGENT_ROLES: Record<string, { dept: string; duty: string }> = {
+  市场分析师: { dept: "市场研究部", duty: "目标用户、市场、竞品和需求分析" },
+  品牌策划师: { dept: "品牌策划部", duty: "品牌定位、产品卖点、品牌故事" },
+  内容策划师: { dept: "内容创作部", duty: "商品详情页、图文、短视频脚本" },
+  合规审核员: { dept: "风控审核部", duty: "内容合规、授权、品牌伦理和质量检查" },
+  运营专员: { dept: "电商运营部", duty: "商品资料、上架准备、店铺运营支持" },
+  商务专员: { dept: "商务拓展部", duty: "企业采购材料、潜在客户筛选跟进" },
+  总经理: { dept: "管理层", duty: "统筹调度与决策" },
+  "AI 总经理 CEO": { dept: "管理层", duty: "统筹调度与决策" },
+};
+
+/** Agent 副标题：`部门 · 职责`，按当前语言渲染（`t` 由调用方注入，便于 render-function 用）。 */
+export function agentSubtitle(name: string | undefined, t: (zh: string) => string): string {
+  const role = AGENT_ROLES[(name ?? "").trim()];
+  if (!role) return t("自定义 Agent");
+  return `${t(role.dept)} · ${t(role.duty)}`;
 }
 
 export const EN_DICTIONARY = EN;
