@@ -750,6 +750,20 @@ export function BizView({ runsSig }: { runsSig?: string }) {
     }
   }
 
+  /* 盈利构成可视化（2026-11-10）：替换原本「指标 / 数值 / 说明」三列空表 ——
+     那六项与顶部 KPI 卡重复，且只有文字没有结构。这里改成「营收怎么被拆开」
+     的堆叠条 + 利润率环 + 社媒发布进度，信息密度和观感都比表格强。 */
+  const rev = ov?.revenue_cents ?? 0;
+  const costC = ov?.cost_cents ?? 0;
+  const shipC = ov?.shipping_cents ?? 0;
+  const profitC = ov?.profit_cents ?? 0;
+  const margin = ov?.margin_pct ?? null;
+  const base = Math.max(rev, costC + shipC + Math.max(profitC, 0), 1);
+  const pctOf = (v: number) => (ov && base > 0 ? Math.max(0, (v / base) * 100) : 0);
+  const published = posts.filter((p) => p.status === "published").length;
+  const publishPct = posts.length > 0 ? (published / posts.length) * 100 : 0;
+  const ringPct = margin != null ? Math.max(0, Math.min(100, margin)) : 0;
+
   const kpis: Array<[string, string, string]> = [
     ["营收", ov ? fmtYuan(ov.revenue_cents) : "—", "近 30 天"],
     ["盈利", ov ? fmtYuan(ov.profit_cents) : "—", ov?.margin_pct != null ? `利润率 ${ov.margin_pct}%` : "利润率 —"],
@@ -815,48 +829,94 @@ export function BizView({ runsSig }: { runsSig?: string }) {
       {tab === "overview" && <CraftCardsSection refreshKey={cardsKey} />}
 
       {tab === "overview" && (
-        <div className="sf-biz-table-wrap">
-          <table className="sf-biz-table">
-            <thead>
-              <tr>
-                <th>指标</th>
-                <th>数值</th>
-                <th>说明</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>营收</td>
-                <td>{ov ? fmtYuan(ov.revenue_cents) : "—"}</td>
-                <td>全部销售流水</td>
-              </tr>
-              <tr>
-                <td>货本</td>
-                <td>{ov ? fmtYuan(ov.cost_cents) : "—"}</td>
-                <td>商品成本合计</td>
-              </tr>
-              <tr>
-                <td>运费</td>
-                <td>{ov ? fmtYuan(ov.shipping_cents) : "—"}</td>
-                <td>快递费用合计</td>
-              </tr>
-              <tr>
-                <td>盈利</td>
-                <td>{ov ? fmtYuan(ov.profit_cents) : "—"}</td>
-                <td>营收 − 货本 − 运费</td>
-              </tr>
-              <tr>
-                <td>利润率</td>
-                <td>{ov?.margin_pct != null ? `${ov.margin_pct}%` : "—"}</td>
-                <td>盈利 / 营收</td>
-              </tr>
-              <tr>
-                <td>社媒发布</td>
-                <td>{posts.filter((p) => p.status === "published").length} / {posts.length}</td>
-                <td>已发布帖子 / 全部帖子</td>
-              </tr>
-            </tbody>
-          </table>
+        <div className="sf-profit">
+          <div className="sf-profit-main">
+            <div className="sf-card-title">
+              <div>
+                <strong>盈利构成</strong>
+                <span>营收如何拆成成本与利润</span>
+              </div>
+              <span className="sf-net-count">{ov ? `营收 ${fmtYuan(rev)}` : "暂无数据"}</span>
+            </div>
+
+            <div className="sf-profit-bar" role="img" aria-label="营收成本利润构成">
+              {ov && rev > 0 ? (
+                <>
+                  <i className="cost" style={{ width: `${pctOf(costC)}%` }} title={`货本 ${fmtYuan(costC)}`} />
+                  <i className="ship" style={{ width: `${pctOf(shipC)}%` }} title={`运费 ${fmtYuan(shipC)}`} />
+                  <i
+                    className={profitC >= 0 ? "profit" : "loss"}
+                    style={{ width: `${profitC >= 0 ? pctOf(profitC) : Math.min(100, pctOf(Math.abs(profitC)))}%` }}
+                    title={`${profitC >= 0 ? "盈利" : "亏损"} ${fmtYuan(Math.abs(profitC))}`}
+                  />
+                </>
+              ) : (
+                <i className="empty" />
+              )}
+            </div>
+
+            <ul className="sf-profit-legend">
+              <li>
+                <i className="cost" />
+                <span>货本</span>
+                <strong>{ov ? fmtYuan(costC) : "—"}</strong>
+                <small>{ov && rev > 0 ? `${pctOf(costC).toFixed(0)}%` : ""}</small>
+              </li>
+              <li>
+                <i className="ship" />
+                <span>运费</span>
+                <strong>{ov ? fmtYuan(shipC) : "—"}</strong>
+                <small>{ov && rev > 0 ? `${pctOf(shipC).toFixed(0)}%` : ""}</small>
+              </li>
+              <li className={profitC < 0 ? "neg" : ""}>
+                <i className={profitC >= 0 ? "profit" : "loss"} />
+                <span>{profitC >= 0 ? "盈利" : "亏损"}</span>
+                <strong>{ov ? fmtYuan(profitC) : "—"}</strong>
+                <small>{ov && rev > 0 ? `${pctOf(Math.abs(profitC)).toFixed(0)}%` : ""}</small>
+              </li>
+            </ul>
+
+            <div className="sf-profit-publish">
+              <div className="sf-profit-publish-head">
+                <span>社媒发布</span>
+                <strong>
+                  {published} / {posts.length}
+                </strong>
+              </div>
+              <div className="sf-profit-publish-bar">
+                <i style={{ width: `${publishPct}%` }} />
+              </div>
+              <small>{posts.length > 0 ? `已发布占 ${publishPct.toFixed(0)}%` : "还没有帖子"}</small>
+            </div>
+          </div>
+
+          <div className="sf-profit-side">
+            <div className="sf-margin-ring">
+              <svg viewBox="0 0 120 120" aria-label="利润率">
+                <defs>
+                  <linearGradient id="sfMarginGrad" x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0%" stopColor="#8e6cff" />
+                    <stop offset="100%" stopColor="#2ec4a6" />
+                  </linearGradient>
+                </defs>
+                <circle cx="60" cy="60" r="48" className="track" />
+                {ringPct > 0 && (
+                  <circle
+                    cx="60"
+                    cy="60"
+                    r="48"
+                    className="value"
+                    strokeDasharray={`${(ringPct / 100) * 301.6} 301.6`}
+                  />
+                )}
+              </svg>
+              <div className="sf-margin-ring-text">
+                <strong>{margin != null ? `${margin}%` : "—"}</strong>
+                <span>利润率</span>
+              </div>
+            </div>
+            <p className="sf-margin-hint">盈利 ÷ 营收 · 反映每 100 元流水留下多少</p>
+          </div>
         </div>
       )}
 

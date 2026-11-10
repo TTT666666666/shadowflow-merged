@@ -35,6 +35,7 @@ import {
   initialsOf,
   useAuthState,
 } from "../auth";
+import { useI18n } from "../i18n";
 import {
   ApiError,
   apiFetch,
@@ -173,6 +174,7 @@ async function withRetry<T>(fn: () => Promise<T>): Promise<T> {
 }
 
 export default function ProductApp() {
+  const { t } = useI18n();
   const [view, setView] = useState<View>("chat");
   const [panelOpen, setPanelOpen] = useState(true);
   const [mobileRailOpen, setMobileRailOpen] = useState(false);
@@ -853,7 +855,7 @@ export default function ProductApp() {
             aria-expanded={view === "chat" && panelOpen}
           >
             <MessageSquare size={17} />
-            <span>对话</span>
+            <span>{t("对话")}</span>
             <ChevronDown size={15} />
           </button>
         </div>
@@ -861,7 +863,7 @@ export default function ProductApp() {
         <nav className="sf-primary-nav">
           <button className={view === "agents" ? "active" : ""} onClick={() => navigate("agents")}>
             <Users size={17} />
-            <span>Agent 团队</span>
+            <span>{t("Agent 团队")}</span>
             {agentsList.length > 0 && <span className="sf-count">{displayAgents(agentsList).length}</span>}
           </button>
           <button
@@ -869,29 +871,29 @@ export default function ProductApp() {
             onClick={() => navigate("knowledge")}
           >
             <BookOpen size={17} />
-            <span>知识库</span>
+            <span>{t("知识库")}</span>
           </button>
           <button className={view === "biz" ? "active" : ""} onClick={() => navigate("biz")}>
             <Store size={17} />
-            <span>生意看板</span>
+            <span>{t("生意看板")}</span>
           </button>
         </nav>
 
         <div className="sf-rail-section">
-          <p>工作空间</p>
+          <p>{t("工作空间")}</p>
           <button
             className={view === "projects" ? "active" : ""}
             onClick={() => navigate("projects")}
           >
             <LayoutGrid size={15} />
-            <span>备忘</span>
+            <span>{t("备忘")}</span>
           </button>
           <button
             className={view === "schedules" ? "active" : ""}
             onClick={() => navigate("schedules")}
           >
             <CalendarClock size={15} />
-            <span>定时任务</span>
+            <span>{t("定时任务")}</span>
           </button>
         </div>
 
@@ -901,7 +903,7 @@ export default function ProductApp() {
             onClick={() => navigate("settings")}
           >
             <Settings size={16} />
-            <span>设置</span>
+            <span>{t("设置")}</span>
           </button>
           {auth.user ? (
             <div className="sf-account sf-account--user" ref={accountRef}>

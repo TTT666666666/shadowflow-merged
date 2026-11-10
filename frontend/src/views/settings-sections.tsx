@@ -45,6 +45,7 @@ import {
   writePrefs,
   type SfPrefs,
 } from "../settings-prefs";
+import { useI18n } from "../i18n";
 
 type Note = { tone: "ok" | "err" | "info"; text: string } | null;
 
@@ -78,13 +79,14 @@ function PrefRow<T extends string | number>({
   options: Array<{ value: T; label: string }>;
   onChange: (next: T) => void;
 }) {
+  const { t } = useI18n();
   return (
     <div className="sf-pref-row">
       <div>
-        <strong>{title}</strong>
+        <strong>{t(title)}</strong>
         {hint ? <small>{hint}</small> : null}
       </div>
-      <div className="sf-chip-row" role="group" aria-label={title}>
+      <div className="sf-chip-row" role="group" aria-label={t(title)}>
         {options.map((opt) => (
           <button
             key={String(opt.value)}
@@ -93,7 +95,7 @@ function PrefRow<T extends string | number>({
             aria-pressed={opt.value === value}
             onClick={() => onChange(opt.value)}
           >
-            {opt.label}
+            {t(opt.label)}
           </button>
         ))}
       </div>
@@ -337,6 +339,7 @@ export function AppearanceSection() {
 // ── 3. 语言 ───────────────────────────────────────────────────────────────────
 
 export function LanguageSection() {
+  const { t } = useI18n();
   const [prefs, setPrefs] = useState<SfPrefs>(() => currentPrefs());
   useEffect(() => subscribePrefs(setPrefs), []);
   const patch = useCallback((next: Partial<SfPrefs>) => setPrefs(writePrefs(next)), []);
@@ -359,7 +362,7 @@ export function LanguageSection() {
         </div>
         <PrefRow
           title="界面语言"
-          hint="影响日期、时间、货币与数字的显示格式（界面文案的中英全量翻译尚未交付）"
+          hint="切换后界面文案、日期、时间、货币与数字格式同步改变（导航与设置页已全量双语，其余视图随改随包）"
           value={prefs.locale}
           options={[
             { value: "zh-CN", label: "简体中文" },
@@ -396,15 +399,15 @@ export function LanguageSection() {
         </div>
         <dl className="sf-kv">
           <div>
-            <dt>日期时间</dt>
+            <dt>{t("日期时间")}</dt>
             <dd>{sample.datetime}</dd>
           </div>
           <div>
-            <dt>金额</dt>
+            <dt>{t("金额")}</dt>
             <dd>{sample.money}</dd>
           </div>
           <div>
-            <dt>数字</dt>
+            <dt>{t("数字")}</dt>
             <dd>{sample.number}</dd>
           </div>
         </dl>

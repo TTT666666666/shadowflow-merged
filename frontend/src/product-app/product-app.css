@@ -6617,3 +6617,330 @@ html[data-sf-motion="reduce"] *::after {
   accent-color: #ff5e3a;
 }
 
+
+/* ============ 盈利构成（生意看板总览，2026-11-10） ============ */
+.sf-profit {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 240px;
+  gap: 18px;
+  padding: 20px 22px;
+  margin: 4px 0 18px;
+  background: #fffdf9;
+  border: 1px solid #ded7cc;
+  border-radius: 14px;
+  box-shadow: 0 1px 2px rgba(23, 22, 45, 0.03);
+}
+.sf-profit-bar {
+  display: flex;
+  height: 22px;
+  margin: 16px 0 14px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: #f1ece2;
+  box-shadow: inset 0 1px 2px rgba(23, 22, 45, 0.06);
+}
+.sf-profit-bar i {
+  display: block;
+  height: 100%;
+  transition: width 0.45s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+.sf-profit-bar i.cost { background: linear-gradient(90deg, #f0a58c, #e8795a); }
+.sf-profit-bar i.ship { background: linear-gradient(90deg, #f4c98f, #e0a24c); }
+.sf-profit-bar i.profit { background: linear-gradient(90deg, #7fd9c4, #2ec4a6); }
+.sf-profit-bar i.loss { background: linear-gradient(90deg, #f08a94, #d94a5c); }
+.sf-profit-bar i.empty { width: 100%; background: repeating-linear-gradient(45deg, #f1ece2 0 8px, #e9e2d6 8px 16px); }
+.sf-profit-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 26px;
+  margin: 0 0 18px;
+  padding: 0;
+  list-style: none;
+}
+.sf-profit-legend li {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  font-size: 12.5px;
+  color: #77737d;
+}
+.sf-profit-legend li > i {
+  width: 9px;
+  height: 9px;
+  border-radius: 3px;
+  transform: translateY(-1px);
+}
+.sf-profit-legend i.cost { background: #e8795a; }
+.sf-profit-legend i.ship { background: #e0a24c; }
+.sf-profit-legend i.profit { background: #2ec4a6; }
+.sf-profit-legend i.loss { background: #d94a5c; }
+.sf-profit-legend strong { font-size: 14px; color: #17162d; font-weight: 650; }
+.sf-profit-legend small { font-size: 11.5px; color: #a8a29a; }
+.sf-profit-legend li.neg strong { color: #d94a5c; }
+.sf-profit-publish { border-top: 1px dashed #e7e0d4; padding-top: 13px; }
+.sf-profit-publish-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  font-size: 12.5px;
+  color: #77737d;
+}
+.sf-profit-publish-head strong { font-size: 13.5px; color: #17162d; }
+.sf-profit-publish-bar {
+  height: 6px;
+  margin: 8px 0 6px;
+  border-radius: 999px;
+  background: #f1ece2;
+  overflow: hidden;
+}
+.sf-profit-publish-bar i {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #ffb198, #ff5e3a);
+  transition: width 0.45s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+.sf-profit-publish small { font-size: 11.5px; color: #a8a29a; }
+.sf-profit-side {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-left: 1px dashed #e7e0d4;
+  padding-left: 18px;
+}
+.sf-margin-ring { position: relative; width: 132px; height: 132px; }
+.sf-margin-ring svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+.sf-margin-ring circle { fill: none; stroke-width: 10; stroke-linecap: round; }
+.sf-margin-ring circle.track { stroke: #efe9de; }
+.sf-margin-ring circle.value { stroke: url(#sfMarginGrad); transition: stroke-dasharray 0.5s ease; }
+.sf-margin-ring-text {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+}
+.sf-margin-ring-text strong { font-size: 25px; font-weight: 700; color: #17162d; letter-spacing: -0.5px; }
+.sf-margin-ring-text span { font-size: 11.5px; color: #8c867f; letter-spacing: 0.4px; }
+.sf-margin-hint {
+  margin: 10px 0 0;
+  max-width: 180px;
+  text-align: center;
+  font-size: 11.5px;
+  line-height: 1.55;
+  color: #a8a29a;
+}
+@media (max-width: 900px) {
+  .sf-profit { grid-template-columns: 1fr; }
+  .sf-profit-side { border-left: 0; border-top: 1px dashed #e7e0d4; padding: 16px 0 0; }
+}
+
+/* ============ 用量与额度（设置页，2026-11-10） ============ */
+.sf-usage { display: flex; flex-direction: column; gap: 18px; max-width: 880px; }
+.sf-usage-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.sf-usage-head p {
+  margin: 0 0 4px;
+  font-size: 10.5px;
+  letter-spacing: 1.6px;
+  color: #ff5e3a;
+  font-weight: 700;
+}
+.sf-usage-head h2 { margin: 0 0 6px; font-size: 21px; color: #17162d; }
+.sf-usage-head span { font-size: 12.5px; color: #8c867f; line-height: 1.6; }
+.sf-usage-range { display: flex; gap: 6px; }
+.sf-usage-range button {
+  padding: 6px 12px;
+  font-size: 12.5px;
+  color: #77737d;
+  background: #fffdf9;
+  border: 1px solid #e3ddd2;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+.sf-usage-range button:hover { border-color: #cfc7b8; color: #17162d; }
+.sf-usage-range button.active {
+  color: #fff;
+  background: #17162d;
+  border-color: #17162d;
+}
+.sf-usage-error {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 14px;
+  font-size: 12.5px;
+  color: #a8402f;
+  background: #fdf1ee;
+  border: 1px solid #f3d3ca;
+  border-radius: 10px;
+}
+.sf-usage-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.sf-usage-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 16px 17px;
+  background: #fffdf9;
+  border: 1px solid #ded7cc;
+  border-radius: 13px;
+}
+.sf-usage-card header {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12px;
+  color: #77737d;
+}
+.sf-usage-card header i {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 7px;
+  color: #ff5e3a;
+  background: #fff0ea;
+}
+.sf-usage-card strong { font-size: 25px; font-weight: 700; color: #17162d; letter-spacing: -0.6px; }
+.sf-usage-card small { font-size: 11.5px; color: #a8a29a; }
+.sf-usage-card.loading strong { color: #cfc7b8; }
+.sf-usage-delta {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 11px;
+  padding: 2px 7px;
+  border-radius: 999px;
+}
+.sf-usage-delta.up { color: #b8551f; background: #fdf0e3; }
+.sf-usage-delta.down { color: #1f7a63; background: #e8f6f1; }
+.sf-usage-delta.flat { color: #9a948b; background: #f4f0e8; }
+.sf-usage-split {
+  padding: 16px 18px;
+  background: #fffdf9;
+  border: 1px solid #ded7cc;
+  border-radius: 13px;
+}
+.sf-usage-split-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 11px;
+}
+.sf-usage-split-head strong { font-size: 13.5px; color: #17162d; }
+.sf-usage-split-head span { font-size: 12px; color: #8c867f; }
+.sf-usage-bar {
+  display: flex;
+  height: 14px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: #f1ece2;
+}
+.sf-usage-bar i { display: block; height: 100%; transition: width 0.4s ease; }
+.sf-usage-bar i.in { background: linear-gradient(90deg, #ffb198, #ff5e3a); }
+.sf-usage-bar i.out { background: linear-gradient(90deg, #9d86ff, #6b4ef0); }
+.sf-usage-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 22px;
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 12px;
+  color: #77737d;
+}
+.sf-usage-legend li { display: flex; align-items: center; gap: 6px; }
+.sf-usage-legend i { width: 8px; height: 8px; border-radius: 3px; }
+.sf-usage-legend i.in { background: #ff5e3a; }
+.sf-usage-legend i.out { background: #6b4ef0; }
+.sf-usage-legend i.run { background: #2ec4a6; }
+.sf-usage-note {
+  padding: 14px 16px;
+  background: #f7f4ec;
+  border: 1px solid #e7e0d4;
+  border-radius: 12px;
+}
+.sf-usage-note strong { display: block; margin-bottom: 5px; font-size: 12.5px; color: #17162d; }
+.sf-usage-note p { margin: 0; font-size: 12px; line-height: 1.7; color: #7d7870; }
+@media (max-width: 760px) {
+  .sf-usage-cards { grid-template-columns: 1fr; }
+}
+
+/* ============ 知识网络（真实数据 + 折叠展开，2026-11-10） ============ */
+.sf-net-stage { position: relative; overflow: visible; }
+.sf-net-stage svg { display: block; width: 100%; overflow: visible; }
+.sf-net-pack { cursor: pointer; }
+.sf-net-pack circle,
+.sf-net-pack text { transition: transform 0.2s ease, opacity 0.2s ease; }
+.sf-net-pack:hover circle:nth-child(2) { opacity: 1; }
+.sf-net-pack:focus { outline: none; }
+.sf-net-pack:focus-visible circle:nth-child(2) { stroke: #17162d; stroke-width: 2; }
+.sf-net-file rect { transition: fill 0.18s ease; }
+.sf-net-file:hover rect:first-child { fill: #fff8f3; }
+.sf-net-more { cursor: pointer; }
+.sf-net-more:hover rect { fill: #efe9de; }
+.sf-net-stats { display: flex; align-items: center; gap: 7px; }
+.sf-net-count.muted { color: #8c867f; background: #f2ede4; }
+.sf-net-truncated { margin: 10px 0 0; font-size: 11.5px; color: #a8a29a; text-align: center; }
+.sf-net-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 42px 20px;
+  color: #a8a29a;
+  text-align: center;
+}
+.sf-net-empty strong { font-size: 13.5px; color: #4a4550; }
+.sf-net-empty span { font-size: 12px; line-height: 1.6; }
+.sf-pack-files { margin: 10px 0 4px; }
+.sf-pack-files ul { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 5px; }
+.sf-pack-files li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 8px;
+  font-size: 11.5px;
+  color: #5c5862;
+  background: #f7f4ec;
+  border-radius: 7px;
+}
+.sf-pack-files li svg { flex: 0 0 auto; color: #a8a29a; }
+.sf-pack-files li > span {
+  flex: 1 1 auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sf-pack-files li > em {
+  flex: 0 0 auto;
+  font-style: normal;
+  font-size: 10.5px;
+  color: #a8a29a;
+}
+.sf-pack-files-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin-top: 7px;
+  padding: 3px 8px;
+  font-size: 11px;
+  color: #8c7f6a;
+  background: transparent;
+  border: 1px dashed #ddd5c6;
+  border-radius: 999px;
+  cursor: pointer;
+}
+.sf-pack-files-toggle:hover { color: #17162d; border-color: #b9b0a0; }

@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import EmbeddingSection from "../EmbeddingSection";
 import CreditsUsageSection from "../CreditsUsageSection";
+import { useI18n } from "../i18n";
 import {
   useAuthState,
 } from "../auth";
@@ -810,6 +811,9 @@ export function SettingsView() {
   const auth = useAuthState();
   const isAdmin = auth.user?.role === "admin";
   const [section, setSection] = useState("模型与密钥");
+  /* 界面文案中英切换（2026-11-10）：此前切 English 只有日期/货币格式变，文案全是中文。
+     现在导航与分区标题走 t()，切语言即时生效（订阅偏好，无需刷新）。 */
+  const { t } = useI18n();
   const groups: Array<[string, string[]]> = [
     ["账户", ["个人资料"]],
     ["外观", ["主题与显示", "语言"]],
@@ -824,7 +828,7 @@ export function SettingsView() {
       <aside>
         {groups.map(([group, items]) => (
           <div key={group}>
-            <p>{group}</p>
+            <p>{t(group)}</p>
             {items.map((item) => (
               <button
                 key={item}
@@ -846,7 +850,7 @@ export function SettingsView() {
                 ) : (
                   <Settings size={15} />
                 )}
-                {item}
+                {t(item)}
               </button>
             ))}
           </div>
