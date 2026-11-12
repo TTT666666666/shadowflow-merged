@@ -10,6 +10,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   AlertTriangle,
+  BarChart3,
   Check,
   ClipboardCopy,
   Layers,
@@ -23,9 +24,10 @@ import {
 import { useI18n } from "../i18n";
 import { sfFetch } from "./shared";
 import { TeardownBatch } from "./TeardownBatch";
+import TeardownCompare from "./TeardownCompare";
 import {
   CATEGORY_OPTIONS,
-  CONTACT_KIND_LABEL,
+  issueParams,
   PLATFORM_OPTIONS,
   DIM_LABEL,
   DIM_ORDER,
@@ -137,7 +139,7 @@ export function TeardownView({ onGoBiz }: { onGoBiz?: () => void }) {
   const [report, setReport] = useState<Report | null>(null);
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [copied, setCopied] = useState<string>("");
-  const [tab, setTab] = useState<"single" | "batch">("single");
+  const [tab, setTab] = useState<"single" | "batch" | "compare">("single");
 
   const mounted = useRef(true);
   useEffect(() => {
@@ -272,6 +274,15 @@ export function TeardownView({ onGoBiz }: { onGoBiz?: () => void }) {
         >
           <Layers size={14} /> {t("批量诊断")}
         </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={tab === "compare"}
+          className={tab === "compare" ? "on" : ""}
+          onClick={() => setTab("compare")}
+        >
+          <BarChart3 size={14} /> {t("改前改后")}
+        </button>
       </div>
 
       {tab === "batch" ? (
@@ -281,6 +292,8 @@ export function TeardownView({ onGoBiz }: { onGoBiz?: () => void }) {
             void openHistory(id);
           }}
         />
+      ) : tab === "compare" ? (
+        <TeardownCompare />
       ) : (
       <div className="sf-doctor">
         <section className="sf-doctor-form">
@@ -297,7 +310,7 @@ export function TeardownView({ onGoBiz }: { onGoBiz?: () => void }) {
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder={t("标题")}
-            maxLength={200}
+            maxLength={300}
           />
         </label>
 
@@ -516,16 +529,7 @@ export function TeardownView({ onGoBiz }: { onGoBiz?: () => void }) {
               )}
               {report.issues.map((issue, index) => {
                 const copy = ISSUE_COPY[issue.id];
-                // 后端只回 kind=email/url/phone，渲染前换成当前语言的说法
-                const params =
-                  issue.id === "platform.contact"
-                    ? {
-                        ...issue.params,
-                        kind: t(
-                          CONTACT_KIND_LABEL[String(issue.params.kind)] ?? CONTACT_KIND_LABEL.email,
-                        ),
-                      }
-                    : issue.params;
+                const params = issueParams(issue, t);
                 return (
                   <article key={`${issue.id}-${index}`} className={`sf-doctor-issue lv-${issue.severity}`}>
                     <header>

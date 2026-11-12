@@ -106,6 +106,22 @@ export const CONTACT_KIND_LABEL: Record<string, string> = {
   phone: "电话",
 };
 
+/**
+ * 渲染前把参数改成「当前语言可读」的形式。
+ *
+ * 目前只有 `platform.contact` 的 `kind` 是枚举值（email/url/phone），直接插进
+ * 文案会露出英文单词；其余码的 params 都是数字或原文片段，原样传即可。
+ * 抽成函数是为了让单条诊断和改前改后对比用**同一套**渲染逻辑，不再各写一份。
+ */
+export function issueParams(
+  issue: { id: string; params: Record<string, string | number> },
+  translate: (text: string) => string,
+): Record<string, string | number> {
+  if (issue.id !== "platform.contact") return issue.params;
+  const kind = CONTACT_KIND_LABEL[String(issue.params.kind)] ?? CONTACT_KIND_LABEL.email;
+  return { ...issue.params, kind: translate(kind) };
+}
+
 /** 标题骨架缺哪一段（后端 `titles[].missing`）。 */
 export const SLOT_LABEL: Record<string, string> = {
   name: "品名",
@@ -321,6 +337,19 @@ export const SAMPLE_LISTING = {
   title: "小兔子玩偶",
   points: "很可爱的兔子\n纯手工做的好东西\n买就送",
   detail: "自己做的，质量很好，喜欢可以联系我。全网最低价，错过就没了。",
+  price: "39",
+};
+
+/**
+ * 上面那份「卖不动」的改后版本：同一件商品，只改文案，不改产品。
+ * 用作「改前改后」对比的示例——差多少分一目了然，也是这个功能的卖点演示。
+ */
+export const SAMPLE_LISTING_FIXED = {
+  title: "手工钩织小兔 18cm 牛奶棉线 送人礼盒装",
+  points:
+    "钩织工艺，柔软不扎手，抱着睡也不硌人\n填充饱满不掉毛，水洗后不变形\n附赠礼盒与贺卡，送人不用再包装",
+  detail:
+    "材质：牛奶棉线 + 树脂填充。附检测报告与实拍图。7 天无理由退换，破损补发。顺丰包邮。有问题随时联系客服。",
   price: "39",
 };
 

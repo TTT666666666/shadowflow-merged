@@ -13,7 +13,7 @@ import os
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Mapping, Optional
+from typing import Any, Dict, List, Mapping, Optional, Sequence
 
 from fastapi import APIRouter, Body, HTTPException, Query
 from fastapi.responses import Response
@@ -262,6 +262,9 @@ def analyze_listing(payload: dict = Body(...)):
             "reviews": data["reviews"],
             "price_cents": data["price_cents"],
             "flags": data["flags"],
+            # 带上判定口径：改后对比与「按上次的参数重跑」都要用到
+            "category": data.get("category"),
+            "platform": data.get("platform"),
         },
     }
     _save(report_id, record)
@@ -308,6 +311,121 @@ def get_report(report_id: str):
     if not record:
         raise HTTPException(404, f"诊断报告不存在：{report_id}")
     return record
+
+
+# ── 改前 / 改后对比：代运营给甲方交差的证据 ──────────────────────────────────
+#
+# 单次诊断只回答「现在怎么样」，甲方真正要看的是「你改完之后好了多少」。
+# 这也是复购钩子：第一次诊断是免费引流，第二次对比证明价值，第三次才谈订阅。
+
+
+def _issue_ids(report: Mapping[str, Any]) -> List[str]:
+    """按出现顺序去重：同一个码出现两次时，改后剩一个也算没改干净。"""
+    seen: List[str] = []
+    for item in report.get("issues") or []:
+        code = str(item.get("id") or "")
+        if code and code not in seen:
+            seen.append(code)
+    return seen
+
+
+def _issues_for(report: Mapping[str, Any], codes: Sequence[str]) -> List[Dict[str, Any]]:
+    """取出这些码对应的**完整问题对象**。
+
+    只回 id 的话，前端没法渲染文案——`title.too_short` 的标题里带 `{length}`，
+    缺 params 会原样漏到界面上。回对象则可以直接复用现有问题卡渲染。
+    """
+    wanted = set(codes)
+    out: List[Dict[str, Any]] = []
+    seen: set = set()
+    for item in report.get("issues") or []:
+        code = str(item.get("id") or "")
+        if code in wanted and code not in seen:
+            out.append(item)
+            seen.add(code)
+    return out
+
+
+def _compare_reports(before: Mapping[str, Any], after: Mapping[str, Any]) -> Dict[str, Any]:
+    b_ids, a_ids = _issue_ids(before), _issue_ids(after)
+    b_score = before.get("score") or {}
+    a_score = after.get("score") or {}
+    b_gates = before.get("gates") or {}
+    a_gates = after.get("gates") or {}
+
+    b_dims = {d.get("key"): d for d in b_score.get("dimensions") or []}
+    dimensions = []
+    for dim in a_score.get("dimensions") or []:
+        key = dim.get("key")
+        b_val = (b_dims.get(key) or {}).get("score")
+        a_val = dim.get("score")
+        dimensions.append(
+            {
+                "key": key,
+                "before": b_val,
+                "after": a_val,
+                "delta": (a_val - b_val) if isinstance(b_val, int) and isinstance(a_val, int) else None,
+            }
+        )
+
+    b_total, a_total = b_score.get("total"), a_score.get("total")
+    return {
+        "total": {
+            "before": b_total,
+            "after": a_total,
+            "delta": (a_total - b_total) if isinstance(b_total, int) and isinstance(a_total, int) else None,
+        },
+        "grade": {"before": b_score.get("grade"), "after": a_score.get("grade")},
+        "can_list": {"before": b_gates.get("can_list"), "after": a_gates.get("can_list")},
+        # 回完整对象而不是 id：前端要按现有问题卡渲染文案（含 params）
+        "resolved": _issues_for(before, [c for c in b_ids if c not in a_ids]),
+        "remaining": _issues_for(after, [c for c in a_ids if c in b_ids]),
+        "regressed": _issues_for(after, [c for c in a_ids if c not in b_ids]),
+        "dimensions": dimensions,
+        "counts": {
+            "before": before.get("counts") or {},
+            "after": after.get("counts") or {},
+        },
+    }
+
+
+@router.post("/compare")
+def compare_listings(payload: dict = Body(...)):
+    """对比两份文案（改前 / 改后），返回分数变化、已解决、遗留与新增问题。"""
+    before_raw = payload.get("before")
+    after_raw = payload.get("after")
+    if not isinstance(before_raw, Mapping) or not isinstance(after_raw, Mapping):
+        raise HTTPException(422, "需要 before 与 after 两份文案")
+
+    before_data = _norm_payload(dict(before_raw))
+    after_data = _norm_payload(dict(after_raw))
+    before_rep = analyze(before_data)
+    after_rep = analyze(after_data)
+
+    return {
+        "before": {"input": before_data, "report": before_rep},
+        "after": {"input": after_data, "report": after_rep},
+        "delta": _compare_reports(before_rep, after_rep),
+    }
+
+
+@router.get("/compare")
+def compare_saved(
+    before: str = Query(..., min_length=1),
+    after: str = Query(..., min_length=1),
+):
+    """用两份已落盘报告的 id 对比（批量诊断 / 历史列表里挑两条即可）。"""
+    b_rec = _load(before)
+    a_rec = _load(after)
+    if not b_rec or not a_rec:
+        raise HTTPException(404, "报告不存在")
+    b_rep = b_rec.get("report") or {}
+    a_rep = a_rec.get("report") or {}
+    return {
+        "before": {"report_id": before, "title": b_rec.get("title"), "report": b_rep},
+        "after": {"report_id": after, "title": a_rec.get("title"), "report": a_rep},
+        "delta": _compare_reports(b_rep, a_rep),
+    }
 
 
 @router.get("/rules")

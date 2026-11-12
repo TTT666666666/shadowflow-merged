@@ -138,9 +138,19 @@ describe("TeardownView 标签页", () => {
     const { container } = render(<TeardownView />);
     expect(container.querySelector(".sf-doctor")).not.toBeNull();
     const tabs = container.querySelectorAll(".sf-doctor-tabs button");
-    expect(tabs).toHaveLength(2);
+    expect(tabs).toHaveLength(3);
     fireEvent.click(tabs[1]);
     expect(container.querySelector(".sf-doctor")).toBeNull();
     expect(container.querySelector(".sf-batch-form")).not.toBeNull();
+  });
+
+  it("第三个标签是改前改后，切过去渲染对比面板", () => {
+    stubRouted();
+    const { container } = render(<TeardownView />);
+    const tabs = container.querySelectorAll(".sf-doctor-tabs button");
+    fireEvent.click(tabs[2]);
+    // 对比页有左右两栏表单，且不显示单条诊断的分数区
+    expect(container.querySelectorAll(".sf-cmp-side")).toHaveLength(2);
+    expect(container.querySelector(".sf-doctor")).toBeNull();
   });
 });
