@@ -138,7 +138,7 @@ describe("TeardownView 标签页", () => {
     const { container } = render(<TeardownView />);
     expect(container.querySelector(".sf-doctor")).not.toBeNull();
     const tabs = container.querySelectorAll(".sf-doctor-tabs button");
-    expect(tabs).toHaveLength(3);
+    expect(tabs).toHaveLength(4);
     fireEvent.click(tabs[1]);
     expect(container.querySelector(".sf-doctor")).toBeNull();
     expect(container.querySelector(".sf-batch-form")).not.toBeNull();
@@ -151,6 +151,17 @@ describe("TeardownView 标签页", () => {
     fireEvent.click(tabs[2]);
     // 对比页有左右两栏表单，且不显示单条诊断的分数区
     expect(container.querySelectorAll(".sf-cmp-side")).toHaveLength(2);
+    expect(container.querySelector(".sf-doctor")).toBeNull();
+  });
+
+  it("第四个标签是证据对账，切过去渲染台账表单", () => {
+    stubRouted();
+    const { container } = render(<TeardownView />);
+    const tabs = container.querySelectorAll(".sf-doctor-tabs button");
+    fireEvent.click(tabs[3]);
+    expect(container.querySelector(".sf-ledger-form")).not.toBeNull();
+    // 默认给一行空白证据，用户直接填
+    expect(container.querySelectorAll(".sf-ledger-ev-row")).toHaveLength(1);
     expect(container.querySelector(".sf-doctor")).toBeNull();
   });
 });

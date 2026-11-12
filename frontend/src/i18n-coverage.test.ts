@@ -33,6 +33,7 @@ const FILES = [
   "src/views/TeardownView.tsx",
   "src/views/TeardownBatch.tsx",
   "src/views/TeardownCompare.tsx",
+  "src/views/TeardownLedger.tsx",
   "src/product-app/ProductApp.tsx",
 ];
 
@@ -46,6 +47,18 @@ const HAN = /[\u4e00-\u9fa5]/;
  * 行级白名单：命中即豁免「中文没包 t()」判定。每条都要能说清为什么。
  */
 const ALLOWED_LINES: Array<{ file: string; re: RegExp; why: string }> = [
+  // 对账状态 / 证据类型表：值本身就是 key，渲染时统一 t(STATUS_LABEL[...]) / t(item.label)。
+  {
+    file: "TeardownLedger.tsx",
+    re: /^\s*\w+: "(已覆盖|缺证据|已过期|编号格式不对|证书主体不符|证书范围不覆盖|需人工核验)"|^\s*\{ key: "\w+", label: "[^"]*[\u4e00-\u9fa5]/,
+    why: "STATUS_LABEL 与 FALLBACK_TYPES 的 key 表，渲染时走 t()",
+  },
+  // 示例数据：点「用示例填一遍」后填进输入框，是用户可编辑的输入值，不是界面文案。
+  {
+    file: "TeardownLedger.tsx",
+    re: /^\s*(title|points|seller|code|expiry|subject|scope): "/,
+    why: "SAMPLE 示例值，填入表单供用户修改，中英文界面都原样保留",
+  },
   // 运行状态表：值本身是 key，取用时走 runStatusText() → translate()。
   {
     file: "ChatView.tsx",

@@ -66,6 +66,9 @@ MATERIAL_WORDS = (
     "材质", "面料", "成分", "纯棉", "羊毛", "亚麻", "真皮", "实木", "陶瓷",
     "树脂", "不锈钢", "玻璃", "竹", "木", "手工", "钩织", "编织", "刺绣",
     "工艺", "做法", "制作",
+    # 高频但旧表漏掉的材质名：母婴的「食品级」、硅胶制品、家纺的羽绒蚕丝。
+    # 这些是**正向识别**用的，不属于合规黑名单。
+    "食品级", "硅胶", "乳胶", "羽绒", "蚕丝", "真丝", "铝合金",
 )
 PROOF_WORDS = (
     "检测", "认证", "质检", "资质", "专利", "报告", "销量", "好评", "评价",
@@ -92,17 +95,25 @@ CONTACT_WORDS = ("微信", "电话", "客服", "私信", "扫码", "二维码", 
 OPTION_WORDS = ("规格", "尺寸", "颜色", "款式", "可选", "定制", "型号", "尺码")
 
 # 极限词：刻意收录多字词组，避免「最近/最后」这类单字误伤。
+#
+# 「100%」不在此表：它既可能是违规的效果承诺（100% 有效），也可能是合规的成分
+# 标注（100% 纯棉，需与检测报告一致）。词表无法区分语境，交给
+# ``_check_percent_claim`` 按后接词判定——否则所有纯棉、真丝、果汁类目都会被误杀。
 ABSOLUTE_WORDS = (
     "最好", "最佳", "最强", "最高级", "最低价", "全网最低", "史上最",
     "第一品牌", "销量第一", "排名第一", "国家级", "世界级", "顶级", "唯一",
-    "绝对", "100%", "百分百", "独家配方", "王牌",
+    "绝对", "独家配方", "王牌",
 )
 EFFICACY_WORDS = (
     "治疗", "治愈", "根治", "药效", "降血压", "降血糖", "降血脂", "减肥",
     "瘦身", "排毒", "抗炎", "消炎", "杀菌", "美白祛斑", "生发", "增强免疫",
     "抗癌", "处方",
 )
-GUARANTEE_WORDS = ("永久", "终身", "无效退款", "保证有效", "零风险", "百分百有效", "包治")
+# 保证「效果」的承诺：不管商品是什么，写了就属于虚假宣传高风险，进合规门禁。
+GUARANTEE_WORDS = ("保证有效", "百分百有效", "包治", "绝对有效")
+# 保证「服务」的承诺：终身保修、无效退款、零风险——常见促销话术，风险在于
+# 兑现不了，属提示项而非禁令。全判 high 会把「终身保修」这类正常售后误杀。
+PROMISE_WORDS = ("永久", "终身", "无效退款", "零风险")
 
 SCENE_WORDS = (
     "生日", "婚礼", "节日", "母亲节", "情人节", "毕业", "开学", "露营", "户外",
@@ -202,9 +213,16 @@ CATEGORY_RULES: Dict[str, tuple] = {
             "compliance.food.cert",
             "high",
             (
-                "零添加", "无添加", "纯天然", "天然无添加", "有机", "无公害",
-                "绿色食品", "非转基因", "0糖0卡", "零卡", "孕妇可用", "宝宝可食",
+                "零添加", "无添加", "纯天然", "天然无添加", "0糖0卡", "零卡",
+                "孕妇可用", "宝宝可食",
             ),
+        ),
+        # 「有机 / 绿色食品 / 无公害 / 非转基因」是**认证**用语：有证书就能写，
+        # 没有才是虚假宣传。判 high 会误杀所有正规有机食品商家。
+        (
+            "compliance.food.cert_required",
+            "medium",
+            ("有机", "无公害", "绿色食品", "非转基因"),
         ),
     ),
     "beauty": (
@@ -216,7 +234,15 @@ CATEGORY_RULES: Dict[str, tuple] = {
         (
             "compliance.beauty.whiten",
             "high",
-            ("美白", "祛斑", "淡斑", "祛黄", "白一个度", "全身美白"),
+            ("白一个度", "全身美白", "一次美白", "快速美白", "立刻变白", "美白针"),
+        ),
+        # 「美白 / 祛斑」不是违禁词，属于**特殊化妆品注册**范畴：有证号可写，
+        # 没证号写就是无证宣称。判 high 会把整个美白品类误杀（这是国内美妆最大
+        # 的品类之一），所以单独记 medium，提示补证号，而不是让人把词删掉。
+        (
+            "compliance.beauty.special",
+            "medium",
+            ("美白", "祛斑", "淡斑", "祛黄"),
         ),
         (
             "compliance.beauty.function",
@@ -228,9 +254,11 @@ CATEGORY_RULES: Dict[str, tuple] = {
         (
             "compliance.baby.claim",
             "high",
+            # 「食品级」不在这里：它是材质描述（GB 4806 食品接触材料），是母婴用品
+            # 最常用的合规表述，判 high 会把硅胶水杯、辅食碗这类正常商品全部拦下。
             (
                 "益智", "开发智力", "促进大脑发育", "提高智力", "增强抵抗力",
-                "可食用", "食品级", "无激素", "绝对安全", "宝宝可以咬", "可啃咬",
+                "可食用", "无激素", "绝对安全", "宝宝可以咬", "可啃咬",
                 "零甲醛", "无毒无害",
             ),
         ),
@@ -270,7 +298,9 @@ CATEGORY_HINTS: Dict[str, tuple] = {
     ),
 }
 
-_GENERAL_COMPLIANCE = set(ABSOLUTE_WORDS) | set(EFFICACY_WORDS) | set(GUARANTEE_WORDS)
+_GENERAL_COMPLIANCE = (
+    set(ABSOLUTE_WORDS) | set(EFFICACY_WORDS) | set(GUARANTEE_WORDS) | set(PROMISE_WORDS)
+)
 
 
 def _strip_dupes(words: Sequence[str]) -> tuple:
@@ -357,6 +387,12 @@ _NUM_TOKEN_RE = re.compile(
 _SYMBOL_NOISE_RE = re.compile(r"[!！?？★☆◆●◇▶►※#~～]{2,}|[\U0001F300-\U0001FAFF]")
 _SPACE_RE = re.compile(r"\s+")
 
+# 卖点列表前缀（「1. 」「- 」「1、」「(2)」）。只剥符号与序号，**不碰正文数字**：
+# 「100%纯棉」「32支精梳」「500ml」开头的数字是内容，被剥掉会让材质/规格/发货
+# 三类规则全部失明。旧实现用 lstrip("-•*0123456789.、) ") 逐字符剥离，把
+# 「100%纯棉面料」变成「%纯棉面料」——这是实测发现的 bug，不是理论风险。
+_LIST_PREFIX_RE = re.compile(r"^\s*(?:[-–—•·*►▪]+\s*|\d{1,2}(?:[、)）]|\.[ \t]))")
+
 
 # --------------------------------------------------------------------------- 输入归一
 
@@ -378,7 +414,7 @@ def _as_list(value: Any) -> List[str]:
         raw = parts
     out: List[str] = []
     for item in raw:
-        line = str(item or "").strip().lstrip("-•·*0123456789.、)） ").strip()
+        line = _LIST_PREFIX_RE.sub("", str(item or "")).strip()
         if line:
             out.append(line)
     return out
@@ -536,12 +572,47 @@ def _check_conversion(
     return issues
 
 
+# 「100%」的语境词表：后接成分/材质视为含量标注（合规，需与检测报告一致）；
+# 后接效果或安全承诺（100% 有效 / 100% 无添加）才是违规。
+_PERCENT_RE = re.compile(r"100\s*%|百分之百|百分百")
+_COMPOSITION_TAIL = (
+    "棉", "毛", "丝", "麻", "绒", "木浆", "果汁", "粮", "皮", "胶", "纤维",
+    "原生", "乳", "co", "wo", "si", "li", "le", "po", "ba",
+)
+
+
+def _check_percent_claim(text: str) -> List[Dict[str, Any]]:
+    """「100%」按后接词判定：写成分是标注，写效果是承诺。
+
+    纯词表把「100%」一刀切成极限词，会误杀所有纯棉、真丝、原果汁类目——这些
+    恰恰是商家最爱写、也最需要写的合规信息。旧的 ``ABSOLUTE_WORDS`` 里带着
+    「100%」，实测把「100% 纯棉面料」判成不可上架。
+    """
+    hits: List[str] = []
+    body = text or ""
+    for match in _PERCENT_RE.finditer(body):
+        tail = body[match.end() : match.end() + 10].lower()
+        if any(token in tail for token in _COMPOSITION_TAIL):
+            continue
+        hits.append(match.group(0))
+    if not hits:
+        return []
+    return [
+        _issue(
+            "compliance.absolute", "compliance", "high", hits[0],
+            word=hits[0], count=len(hits),
+        )
+    ]
+
+
 def _check_compliance(text: str, category: Optional[str] = None) -> List[Dict[str, Any]]:
     issues: List[Dict[str, Any]] = []
+    issues += _check_percent_claim(text)
     for code, severity, words in (
         ("compliance.absolute", "high", ABSOLUTE_WORDS),
         ("compliance.efficacy", "high", EFFICACY_WORDS),
-        ("compliance.guarantee", "medium", GUARANTEE_WORDS),
+        ("compliance.guarantee", "high", GUARANTEE_WORDS),
+        ("compliance.promise", "medium", PROMISE_WORDS),
     ):
         hit = _hit(text, words)
         if hit:
@@ -766,6 +837,10 @@ def analyze(payload: Mapping[str, Any], enhance: Optional[Any] = None) -> Dict[s
     ``enhance`` 是模型增强层的可选回调：``enhance(payload, report) -> dict``，
     返回的 ``notes``/``suggestions`` 会并入报告，``engine`` 标记为 ``rules+llm``。
     回调抛异常不影响规则结论（降级为纯规则并记录 ``enhance_error``）。
+
+    当前状态：**API 层未接线**，所有调用都是 ``analyze(data)``，报告里恒为
+    ``engine="rules"``。这个参数是为将来接模型留的扩展点，不代表已经接了模型——
+    它存在的意义是让接模型时不必改 ``analyze`` 的签名，仅此而已。
     """
     title = str(payload.get("title") or "").strip()
     points = _as_list(payload.get("points"))

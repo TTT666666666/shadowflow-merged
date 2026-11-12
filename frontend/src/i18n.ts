@@ -886,9 +886,12 @@ const EN: Record<string, string> = {
   "出现功效宣称「{word}」": "Efficacy claim found: “{word}”",
   "普通商品不能宣称疗效，删掉或改成使用体验描述，否则有下架风险。":
     "Ordinary goods can't claim medical effects — remove it or describe the experience instead, or risk delisting.",
-  "出现绝对承诺「{word}」": "Absolute guarantee found: “{word}”",
-  "改成有条件承诺，例如「非人为损坏 7 天内可退」，比空头保证更可信。":
-    "Turn it into a conditional promise, e.g. “7-day return for non-human damage” — more credible than a blanket guarantee.",
+  "出现效果保证「{word}」": "Absolute efficacy guarantee found: “{word}”",
+  "「保证有效」「包治」属于对效果的绝对承诺，普通商品不能写。改成有条件承诺，例如「非人为损坏 7 天内可退」。":
+    "“Guaranteed effective” or “cures” promises a result no ordinary product can deliver. Replace it with a conditional promise, e.g. “7-day return for non-human damage”.",
+  "承诺「{word}」需能兑现": "Promise “{word}” must be fulfilable",
+  "终身、永久、无效退款、零风险属于服务承诺，兑现不了就是虚假宣传。改成明确期限，例如「3 年质保，非人为损坏包换」。":
+    "Lifetime, forever, refund-if-ineffective and zero-risk are service promises; failing to honour them is false advertising. State a concrete term instead, e.g. “3-year warranty, replacement for non-human damage”.",
 
   // 批量诊断（P0：代运营 / 内容工作室）
   单条诊断: "Single listing",
@@ -907,6 +910,77 @@ const EN: Record<string, string> = {
   "批次名称（选填）": "Batch name (optional)",
   "白标抬头（选填）": "White-label header (optional)",
   开始批量诊断: "Run batch diagnosis",
+
+  // 报告导出（交付物：发给买家的那份 HTML）
+  "LISTING 体检报告": "Listing audit report",
+  生成时间: "Generated",
+  类目: "Category",
+  // 后端 CATEGORY_LABELS 的中文值直接进报告，英文界面要能翻
+  "食品/保健": "Food / supplements",
+  "美妆/护肤": "Beauty / skincare",
+  "母婴/玩具": "Baby / toys",
+  "器械/消毒": "Medical devices / disinfectants",
+  检查项: "Checks",
+  "未发现明显问题": "No obvious issues found",
+  "{n} 个问题待处理": "{n} issues to fix",
+  六维评分: "Score breakdown",
+  原文: "Found in",
+  改写建议: "Suggested rewrite",
+  "标题骨架还缺这些信息": "Title still missing",
+  "未填写商品标题": "Untitled listing",
+  通用电商规则: "General marketplace rules",
+  "未指定类目": "No category specified",
+  "存为 PDF": "Save as PDF",
+  下载报告: "Download report",
+  "署名 / 联系方式（印在报告页脚）": "Signature / contact (printed in footer)",
+  "必须改（不改会被下架或罚款）": "Must fix — risk of takedown or fine",
+  "建议改（直接影响转化）": "Should fix — hurts conversion",
+  可选打磨: "Optional polish",
+  "命中 {n} 项合规红线，逐条见下方「必须改」":
+    "{n} compliance red-line checks triggered — see “Must fix” below",
+  "本报告由规则引擎按公开平台规则与违禁词表逐项判定，同一份文案重复检测结论一致，可复核。检测范围限于文案本身，不含商品实物与资质文件真伪核验，不构成法律意见。":
+    "This report is produced by a deterministic rules engine that checks copy against published marketplace policies and banned-word lists. Re-running the same copy yields identical results and can be audited. Scope is limited to the written copy; product samples and the authenticity of certificates are not verified. This is not legal advice.",
+
+  // 宣称-证据对账（P0：代运营交甲方「资质对账表」）
+  证据对账: "Evidence ledger",
+  "店铺主体（选填）": "Store entity (optional)",
+  "用于核对证书主体是不是你": "Used to check the certificate is in your name",
+  证书台账: "Certificate ledger",
+  用示例填一遍: "Fill with sample",
+  添加一条证据: "Add evidence",
+  编号: "Number",
+  "有效期 YYYY-MM-DD": "Valid until YYYY-MM-DD",
+  证书主体: "Certificate holder",
+  适用范围: "Scope",
+  删除这一条: "Remove this row",
+  "对账中…": "Reconciling…",
+  开始对账: "Run reconciliation",
+  这些宣称都有证据支撑: "Every claim is backed by evidence",
+  "有 {n} 条宣称缺证据支撑": "{n} claims lack supporting evidence",
+  "共 {n} 条宣称": "{n} claims in total",
+  "证据 {n} 份": "{n} documents",
+  没有抽到需要资质的宣称: "No claims requiring qualification found",
+  宣称: "Claim",
+  类型: "Type",
+  需要的证据: "Evidence needed",
+  无需资质: "No certificate needed",
+  已覆盖: "Covered",
+  缺证据: "Missing",
+  已过期: "Expired",
+  编号格式不对: "Invalid number format",
+  证书主体不符: "Holder mismatch",
+  证书范围不覆盖: "Not in scope",
+  需人工核验: "Needs manual check",
+  "编号格式、有效期、主体一致是硬判断；范围覆盖是关键词比对，标「需人工核验」的请自己确认。":
+    "Number format, validity and holder identity are hard checks; scope coverage is keyword matching — anything marked “needs manual check” should be confirmed by a human.",
+  检测报告: "Test report",
+  特殊化妆品注册证: "Special cosmetic registration",
+  有机产品认证: "Organic certification",
+  "3C 认证": "CCC certification",
+  食品生产许可: "Food production licence",
+  保健食品批号: "Health food approval",
+  医疗器械注册证: "Medical device registration",
+  品牌授权书: "Brand authorisation",
   历史批次: "Past batches",
   未命名批次: "Untitled batch",
   "{n} 条": "{n} rows",
@@ -946,23 +1020,29 @@ const EN: Record<string, string> = {
   "普通食品只能讲配料、口感、吃法。要讲功效必须有保健食品批号并按批准范围写，否则删掉，换成「配料表只有 3 项」这类事实。":
     "Plain food may only describe ingredients, taste and how to eat it. Health claims require a registered health-food number and must match its approved wording. Otherwise delete the claim and state a verifiable fact, e.g. “only 3 ingredients”.",
   "「{word}」是需要资质背书的宣称": "“{word}” requires certification to back it up",
-  "有机要有有机认证证书号，纯天然/零添加都需检测依据（零添加 2027 年起也禁止标注）。改成可核验的事实，例如「配料表：核桃仁、腰果」。":
-    "Organic needs a certificate number; “pure natural” and “zero additives” need test evidence (from 2027 “zero additives” labelling is banned outright). Replace with verifiable facts, e.g. “Ingredients: walnuts, cashews”.",
+  "纯天然、零添加都需检测依据（零添加 2027 年起也禁止标注）。改成可核验的事实，例如「配料表：核桃仁、腰果」。":
+    "“Pure natural” and “zero additives” need test evidence (from 2027 “zero additives” labelling is banned outright). Replace with verifiable facts, e.g. “Ingredients: walnuts, cashews”.",
+  "「{word}」需认证证书支撑": "“{word}” needs a certificate number",
+  "有机、绿色食品、无公害、非转基因都要有证书编号。有证就在页面标编号，没证别写，改成「产地直采」这类可核验的事实。":
+    "Organic, green food, pollution-free and non-GMO all require a certificate number. If you have one, show it; if not, drop the word and state a verifiable fact such as “direct from the growing region”.",
   "「{word}」在化妆品上属禁用表述": "“{word}” is a prohibited claim on cosmetics",
   "化妆品不得出现药妆、医用、械字号、医生推荐等医疗暗示。改成成分与肤感描述：「敏感肌可用」→「含神经酰胺，质地清爽」。":
     "Cosmetics may not imply medical use — no “cosmeceutical”, “medical grade”, “device-registered” or “doctor-recommended”. Describe ingredients and texture instead: “sensitive-skin friendly” → “contains ceramides, light texture”.",
-  "「{word}」属特殊化妆品功效，必须有注册证号":
+  "出现效果承诺「{word}」": "Efficacy promise found: “{word}”",
+  "「白一个度」「一次见效」是对效果的绝对承诺，化妆品只能描述使用感受。改成「坚持使用后肤色更均匀」这类可自查的表述。":
+    "“One shade lighter” or “results in one use” is an absolute promise about results; cosmetics may only describe the experience. Reframe it as something the buyer can check, e.g. “more even tone with continued use”.",
+  "「{word}」属特殊化妆品功效，需注册证号":
     "“{word}” is a special-cosmetic claim and needs a registration number",
-  "美白祛斑要按特殊化妆品注册，页面须标「国妆特字」编号。没有证就删掉，改成「提亮肤色、改善暗沉」并只描述使用感受。":
-    "Whitening and spot removal require special-cosmetic registration, and the page must show the special-cosmetic registration number. Without it, drop the claim and describe the experience only.",
+  "美白、祛斑、淡斑、祛黄要按特殊化妆品注册，页面须标「国妆特字」编号。有证就补编号，没证改成「提亮肤色、改善暗沉」。":
+    "Whitening, spot removal, spot fading and anti-sallowness require special-cosmetic registration, and the page must show the registration number. Add the number if you have it; otherwise reframe as “brightens tone, reduces dullness”.",
   "「{word}」是需要功效评价备案的宣称":
     "“{word}” requires an efficacy assessment filing",
   "抗皱、祛痘、缩毛孔、防脱等 2021 年起须提交功效评价报告。没做评价就删掉，只写成分、质地、适用肤质。":
     "Anti-wrinkle, anti-acne, pore-minimising and anti-hair-loss claims have needed an efficacy report since 2021. Without one, stick to ingredients, texture and skin type.",
   "「{word}」在母婴 / 玩具类属违规宣称":
     "“{word}” is an illegal claim for baby and toy products",
-  "玩具不能宣称益智、可食用、食品级、无毒无害；婴幼儿食品不能宣称提高智力。改成可验证参数：适用年龄、材质、3C 证书编号。":
-    "Toys may not claim to boost intelligence, be edible, food-grade or completely non-toxic; infant food may not claim to raise IQ. Replace with verifiable specs: age range, material, 3C certificate number.",
+  "玩具不能宣称益智、可食用、无毒无害；婴幼儿食品不能宣称提高智力。改成可验证参数：适用年龄、材质、3C 证书编号。":
+    "Toys may not claim to boost intelligence, be edible or completely non-toxic; infant food may not claim to raise IQ. Replace with verifiable specs: age range, material, 3C certificate number.",
   "「{word}」是医疗器械才允许的表述":
     "“{word}” is reserved for registered medical devices",
   "非医疗器械不得讲治疗、康复、替代药物。删掉疗效表述，只写适用范围、测量精度、使用方法。":

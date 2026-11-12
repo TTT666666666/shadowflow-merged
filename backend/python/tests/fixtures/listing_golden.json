@@ -1,0 +1,419 @@
+{
+  "version": 1,
+  "built": "2026-11-12",
+  "disclaimer": "自建回归集，不是准召率证明。标签由引擎作者人工判定，因此它能证明『已知类型不会被判错』和『改动不会让旧判定退化』，不能证明『覆盖了真实商家文案的全部问题』。真实准召需要第三方标注的真实 listing，见 docs/诊断引擎评测-2026-11.md。",
+  "cases": [
+    {
+      "id": "P01",
+      "group": "pass",
+      "note": "100%纯棉：成分标注，不得判极限词",
+      "title": "男士纯棉短袖T恤 夏季薄款 32支精梳棉 圆领",
+      "points": [
+        "100%纯棉面料，亲肤透气",
+        "32支精梳棉，洗后不易变形",
+        "5个尺码可选，180斤可穿",
+        "7天无理由退换，含运费险",
+        "包邮，48小时内发货"
+      ],
+      "price_cents": 6900,
+      "category": "auto",
+      "platform": "generic",
+      "must_ids": [],
+      "must_not_ids": ["compliance.absolute"]
+    },
+    {
+      "id": "P02",
+      "group": "pass",
+      "note": "美白属特殊化妆品，应提示补证号，不得拦上架",
+      "title": "烟酰胺美白精华液 30ml 提亮肤色",
+      "points": [
+        "含 5% 烟酰胺，配方稳定",
+        "质地清爽，上脸不黏腻",
+        "敏感肌可用，无酒精无香精",
+        "30天无理由退换，破损包补",
+        "包邮"
+      ],
+      "price_cents": 12900,
+      "category": "beauty",
+      "platform": "generic",
+      "must_ids": ["compliance.beauty.special"],
+      "must_not_ids": ["compliance.beauty.whiten"]
+    },
+    {
+      "id": "P03",
+      "group": "pass",
+      "note": "食品级：GB 4806 材质描述，母婴最常用合规表述",
+      "title": "儿童硅胶折叠水杯 带吸管 户外便携",
+      "points": [
+        "食品级硅胶，耐 -20 到 120 度",
+        "折叠后仅 4cm，可放进口袋",
+        "附检测报告编号，可官网查询",
+        "包邮，48小时发货",
+        "7天无理由退换"
+      ],
+      "price_cents": 4900,
+      "category": "baby",
+      "platform": "generic",
+      "must_ids": [],
+      "must_not_ids": ["compliance.baby.claim"]
+    },
+    {
+      "id": "P04",
+      "group": "pass",
+      "note": "有机认证：有证书即可写，应提示而非拦",
+      "title": "明前龙井绿茶 250g 罐装 春茶",
+      "points": [
+        "核心产区明前采摘，一芽一叶",
+        "有机认证，证书编号可在官网查询",
+        "250g 罐装，避光密封",
+        "顺丰包邮",
+        "不满意可退换"
+      ],
+      "price_cents": 15800,
+      "category": "food",
+      "platform": "generic",
+      "must_ids": ["compliance.food.cert_required"],
+      "must_not_ids": ["compliance.food.cert"]
+    },
+    {
+      "id": "P05",
+      "group": "pass",
+      "note": "实木家具，规格齐全",
+      "title": "实木升降书桌 1.2 米 电动升降 橡胶木",
+      "points": [
+        "橡胶木实木桌面，厚 2.5cm",
+        "电动升降 71-120cm，记忆 3 档高度",
+        "承重 80kg，附安装视频",
+        "整机保修 3 年，非人为损坏包换",
+        "顺丰包邮"
+      ],
+      "price_cents": 89900,
+      "category": "auto",
+      "platform": "generic",
+      "must_ids": [],
+      "must_not_ids": []
+    },
+    {
+      "id": "P06",
+      "group": "pass",
+      "note": "316 不锈钢内胆，实测数据",
+      "title": "不锈钢保温杯 500ml 长效保温 316 内胆",
+      "points": [
+        "316 不锈钢内胆，无金属味",
+        "实测 95 度热水 12 小时后 58 度",
+        "杯盖可拆洗，无死角",
+        "7天无理由退换，漏发破损包补",
+        "包邮，48小时发货"
+      ],
+      "price_cents": 8900,
+      "category": "auto",
+      "platform": "generic",
+      "must_ids": [],
+      "must_not_ids": ["compliance.absolute"]
+    },
+    {
+      "id": "P07",
+      "group": "pass",
+      "note": "英文 listing，100% cotton 属成分标注",
+      "title": "Men's Cotton T-Shirt Short Sleeve Crew Neck",
+      "points": [
+        "100% cotton, 180gsm combed ring-spun",
+        "Pre-shrunk, machine washable",
+        "5 sizes available, fits up to 100kg",
+        "Free returns within 30 days",
+        "Ships within 48 hours"
+      ],
+      "price_cents": 1999,
+      "category": "auto",
+      "platform": "amazon",
+      "must_ids": [],
+      "must_not_ids": ["compliance.absolute", "platform.promo"]
+    },
+    {
+      "id": "P08",
+      "group": "pass",
+      "note": "家电，参数型卖点",
+      "title": "空气炸锅 5L 家用 大容量 可视窗口",
+      "points": [
+        "360 度热风循环，受热均匀",
+        "8 种预设菜单，一键启动",
+        "不粘内胆可拆洗，可用洗碗机",
+        "1 年换新，全国联保",
+        "包邮，48小时发货"
+      ],
+      "price_cents": 29900,
+      "category": "auto",
+      "platform": "generic",
+      "must_ids": [],
+      "must_not_ids": []
+    },
+    {
+      "id": "P09",
+      "group": "pass",
+      "note": "100%桑蚕丝，成分标注",
+      "title": "真丝眼罩 100%桑蚕丝 遮光助眠 可调节",
+      "points": [
+        "100%桑蚕丝面料，19 姆米厚度",
+        "360 度遮光，鼻梁处不压眼",
+        "可调节松紧带，头围 52-62cm",
+        "7天无理由退换",
+        "包邮"
+      ],
+      "price_cents": 7900,
+      "category": "auto",
+      "platform": "generic",
+      "must_ids": [],
+      "must_not_ids": ["compliance.absolute"]
+    },
+    {
+      "id": "P10",
+      "group": "pass",
+      "note": "100%果汁，成分标注；不得写成功效",
+      "title": "NFC 鲜榨橙汁 1L 冷链 无浓缩还原",
+      "points": [
+        "100%果汁，不加水不加糖",
+        "NFC 非浓缩还原，冷链配送",
+        "1L 家庭装，开盖后冷藏 3 天内喝完",
+        "破损包赔，签收 24 小时内可申请",
+        "顺丰冷链包邮"
+      ],
+      "price_cents": 3900,
+      "category": "food",
+      "platform": "generic",
+      "must_ids": [],
+      "must_not_ids": ["compliance.absolute", "compliance.food.efficacy"]
+    },
+    {
+      "id": "P11",
+      "group": "pass",
+      "note": "咖啡豆，产地与处理法",
+      "title": "云南小粒咖啡豆 中深烘焙 250g 水洗",
+      "points": [
+        "云南保山产区，水洗处理",
+        "中深烘焙，坚果与焦糖风味",
+        "下单当天烘焙，锁鲜单向阀袋",
+        "不满意可退换",
+        "顺丰包邮"
+      ],
+      "price_cents": 5800,
+      "category": "food",
+      "platform": "generic",
+      "must_ids": [],
+      "must_not_ids": ["compliance.food.cert"]
+    },
+    {
+      "id": "P12",
+      "group": "pass",
+      "note": "手工皂，成分与工艺",
+      "title": "手工皂 冷制橄榄油基底 100g 无香精",
+      "points": [
+        "初榨橄榄油 72%，冷制工艺",
+        "皂化 45 天，pH 值 8 左右",
+        "无香精无色素，敏感肌可用",
+        "7天无理由退换",
+        "包邮"
+      ],
+      "price_cents": 4900,
+      "category": "beauty",
+      "platform": "generic",
+      "must_ids": [],
+      "must_not_ids": ["compliance.beauty.drug"]
+    },
+    {
+      "id": "P13",
+      "group": "pass",
+      "note": "瑜伽垫，材质与尺寸",
+      "title": "TPE 瑜伽垫 加厚 8mm 防滑 183x61cm",
+      "points": [
+        "TPE 材质，无异味可回收",
+        "8mm 加厚，护膝不硌",
+        "双面防滑纹理，出汗不打滑",
+        "附收纳带，卷起即走",
+        "7天无理由退换，包邮"
+      ],
+      "price_cents": 9900,
+      "category": "auto",
+      "platform": "generic",
+      "must_ids": [],
+      "must_not_ids": []
+    },
+    {
+      "id": "P14",
+      "group": "pass",
+      "note": "宠物食品，成分表与适用阶段",
+      "title": "全价猫粮 成猫 冻干双拼 1.5kg 鸡肉味",
+      "points": [
+        "鲜鸡肉 65%，粗蛋白 40%",
+        "冻干双拼，适口性更好",
+        "全价配方，符合 AAFCO 营养标准",
+        "开袋不满意可退，运费我们承担",
+        "包邮，48小时发货"
+      ],
+      "price_cents": 12900,
+      "category": "food",
+      "platform": "generic",
+      "must_ids": [],
+      "must_not_ids": ["compliance.food.efficacy"]
+    },
+    {
+      "id": "B01",
+      "group": "block",
+      "note": "极限词 + 功效宣称 + 保证疗效",
+      "title": "全网最低价 减肥茶 一周瘦十斤 排毒养颜",
+      "points": [
+        "排毒养颜，根治便秘",
+        "无效退款，零风险",
+        "国家级检测认证"
+      ],
+      "price_cents": 9900,
+      "category": "food",
+      "platform": "generic",
+      "must_ids": ["compliance.absolute", "compliance.efficacy"],
+      "must_not_ids": []
+    },
+    {
+      "id": "B02",
+      "group": "block",
+      "note": "药妆类 + 效果承诺 + 百分百",
+      "title": "医用级祛斑霜 美白祛斑一次见效",
+      "points": [
+        "抗炎消炎，治疗色斑",
+        "百分百有效，无效退款",
+        "医院同款，医生推荐"
+      ],
+      "price_cents": 19900,
+      "category": "beauty",
+      "platform": "generic",
+      "must_ids": ["compliance.beauty.drug", "compliance.absolute"],
+      "must_not_ids": []
+    },
+    {
+      "id": "B03",
+      "group": "block",
+      "note": "普通商品宣称治疗高血压",
+      "title": "降血压保健枕 改善睡眠 护颈椎",
+      "points": [
+        "治疗高血压，替代药物",
+        "增强免疫力",
+        "终身质保"
+      ],
+      "price_cents": 29900,
+      "category": "medical",
+      "platform": "generic",
+      "must_ids": ["compliance.efficacy"],
+      "must_not_ids": []
+    },
+    {
+      "id": "B04",
+      "group": "block",
+      "note": "销量第一 + 世界级 + 最好用",
+      "title": "婴儿辅食机 销量第一 静音 多功能",
+      "points": [
+        "世界级工厂出品",
+        "最好用的辅食机",
+        "独家配方，宝宝爱吃"
+      ],
+      "price_cents": 39900,
+      "category": "baby",
+      "platform": "generic",
+      "must_ids": ["compliance.absolute"],
+      "must_not_ids": []
+    },
+    {
+      "id": "B05",
+      "group": "block",
+      "note": "英文效果承诺，100% 后接 Effective",
+      "title": "Best Whitening Cream for Dark Spots",
+      "points": [
+        "100% Effective in 7 days",
+        "Removes dark spots permanently",
+        "Clinically proven formula"
+      ],
+      "price_cents": 2999,
+      "category": "beauty",
+      "platform": "amazon",
+      "must_ids": ["compliance.absolute"],
+      "must_not_ids": []
+    },
+    {
+      "id": "B06",
+      "group": "block",
+      "note": "食品宣称抗癌与增强免疫",
+      "title": "破壁灵芝孢子粉 增强免疫力 抗癌",
+      "points": [
+        "增强免疫力，防癌抗癌",
+        "无副作用，可长期服用",
+        "提高免疫，调理体质"
+      ],
+      "price_cents": 59800,
+      "category": "food",
+      "platform": "generic",
+      "must_ids": ["compliance.food.efficacy"],
+      "must_not_ids": []
+    },
+    {
+      "id": "B07",
+      "group": "block",
+      "note": "化妆品冒用医疗身份",
+      "title": "药妆修护面霜 械字号 医院同款",
+      "points": [
+        "医学护肤，医生推荐",
+        "处方级修护",
+        "医用级无菌灌装"
+      ],
+      "price_cents": 25800,
+      "category": "beauty",
+      "platform": "generic",
+      "must_ids": ["compliance.beauty.drug"],
+      "must_not_ids": []
+    },
+    {
+      "id": "B08",
+      "group": "block",
+      "note": "玩具做安全承诺与可啃咬暗示",
+      "title": "婴儿牙胶玩具 可啃咬 零甲醛 绝对安全",
+      "points": [
+        "宝宝可以咬，可食用级",
+        "无毒无害，绝对安全",
+        "零甲醛，益智开发智力"
+      ],
+      "price_cents": 4900,
+      "category": "baby",
+      "platform": "generic",
+      "must_ids": ["compliance.baby.claim"],
+      "must_not_ids": []
+    },
+    {
+      "id": "B09",
+      "group": "block",
+      "note": "终身 + 零风险承诺",
+      "title": "净水器 家用直饮 终身保修 零风险",
+      "points": [
+        "终身免费换芯",
+        "零风险试用，无效退款",
+        "保证有效，包治水垢"
+      ],
+      "price_cents": 129900,
+      "category": "auto",
+      "platform": "generic",
+      "must_ids": ["compliance.guarantee"],
+      "must_not_ids": []
+    },
+    {
+      "id": "B10",
+      "group": "block",
+      "note": "国家级 + 世界级 + 排名第一",
+      "title": "记忆棉枕 排名第一 国家级认证 世界级品质",
+      "points": [
+        "国家级检测认证",
+        "世界级工厂，第一品牌",
+        "顶级材质，绝对舒适"
+      ],
+      "price_cents": 19900,
+      "category": "auto",
+      "platform": "generic",
+      "must_ids": ["compliance.absolute"],
+      "must_not_ids": []
+    }
+  ]
+}

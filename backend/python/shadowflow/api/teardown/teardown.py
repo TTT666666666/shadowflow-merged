@@ -18,6 +18,7 @@ from typing import Any, Dict, List, Mapping, Optional, Sequence
 from fastapi import APIRouter, Body, HTTPException, Query
 from fastapi.responses import Response
 
+from shadowflow.services.claim_evidence import EVIDENCE_TYPES, reconcile
 from shadowflow.services.listing_doctor import analyze
 
 router = APIRouter(prefix="/api/teardown", tags=["teardown"])
@@ -468,7 +469,82 @@ def list_rules():
             }
             for key, label in engine.PLATFORM_LABELS.items()
         ],
+        # 对账页的证据类型下拉直接读这里，前端不再硬编码一份（两处清单必然漂移）
+        "evidence_types": [
+            {"key": key, "label": spec["label"], "hint": spec["hint"]}
+            for key, spec in EVIDENCE_TYPES.items()
+        ],
     }
+
+
+# ── 宣称-证据对账：从「有没有违禁词」升级到「你有没有资格这么说」───────────
+#
+# 与 /analyze 的分工要说清楚：
+#   /analyze   文本 → 问题码。模型也能做，而且能做得更细。
+#   /ledger    文本 → 宣称 → 与证书台账对账。编号格式、有效期、主体、范围
+#              这四件事是确定性计算，模型做不可靠。
+#
+# 刻意不合并成一个接口：对账要求用户手上有证书台账，没有台账的用户不该被它挡住。
+# 两个接口各自独立可用，前端把它们做成两个标签页，不共享表单状态。
+
+MAX_EVIDENCES = 200
+MAX_EVIDENCE_FIELD = 200
+
+
+def _ledger_points(value: Any) -> List[str]:
+    if isinstance(value, (list, tuple)):
+        items = [str(v) for v in value]
+    else:
+        items = _split_cell(value)
+    return [item[:700] for item in items if item.strip()][:20]
+
+
+@router.post("/ledger")
+def claim_ledger(payload: dict = Body(...)):
+    """宣称-证据对账：每条宣称需要什么证、你手上的证覆盖不覆盖。"""
+    raw_items = payload.get("evidences")
+    if raw_items is None:
+        raw_items = []
+    if not isinstance(raw_items, list):
+        raise HTTPException(status_code=422, detail="evidences 必须是数组")
+    if len(raw_items) > MAX_EVIDENCES:
+        raise HTTPException(status_code=422, detail=f"证据最多 {MAX_EVIDENCES} 条")
+
+    evidences: List[Dict[str, Any]] = []
+    for index, item in enumerate(raw_items):
+        if not isinstance(item, Mapping):
+            raise HTTPException(status_code=422, detail=f"第 {index + 1} 条证据格式不对")
+        kind = str(item.get("type") or "").strip()
+        if kind not in EVIDENCE_TYPES:
+            raise HTTPException(
+                status_code=422,
+                detail=f"第 {index + 1} 条证据类型未知：{kind or '(空)'}",
+            )
+        evidences.append(
+            {
+                "type": kind,
+                "code": _clean_field(item.get("code"), MAX_EVIDENCE_FIELD),
+                "expiry": _clean_field(item.get("expiry"), 20),
+                "subject": _clean_field(item.get("subject"), MAX_EVIDENCE_FIELD),
+                "scope": _clean_field(item.get("scope"), MAX_EVIDENCE_FIELD),
+            }
+        )
+
+    result = reconcile(
+        {
+            "title": _clean_field(payload.get("title"), 300),
+            "points": _ledger_points(payload.get("points")),
+            "detail": _clean_field(payload.get("detail"), 4000),
+        },
+        evidences,
+        seller_name=_clean_field(payload.get("seller_name"), MAX_EVIDENCE_FIELD),
+    )
+    # 证据类型清单随响应返回，界面下拉不用再硬编码一份（两处清单必然漂移）。
+    result["evidence_types"] = [
+        {"key": key, "label": spec["label"], "hint": spec["hint"]}
+        for key, spec in EVIDENCE_TYPES.items()
+    ]
+    return result
 
 
 # ── 批量诊断：给代运营「一次交一份可验收的报告」用 ──────────────────────────

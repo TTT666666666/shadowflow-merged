@@ -13,11 +13,13 @@ import {
   BarChart3,
   Check,
   ClipboardCopy,
+  Download,
   Layers,
   Loader2,
   RotateCcw,
   ScanSearch,
   ShieldAlert,
+  ShieldCheck,
   Sparkles,
   Store,
 } from "lucide-react";
@@ -25,6 +27,7 @@ import { useI18n } from "../i18n";
 import { sfFetch } from "./shared";
 import { TeardownBatch } from "./TeardownBatch";
 import TeardownCompare from "./TeardownCompare";
+import TeardownLedger from "./TeardownLedger";
 import {
   CATEGORY_OPTIONS,
   issueParams,
@@ -43,6 +46,7 @@ import {
   type IssueDim,
   type IssueSeverity,
 } from "../teardown-copy";
+import { buildReportHtml, reportFileName } from "../report-html";
 
 // ── 与后端 listing_doctor 的返回结构一一对应 ────────────────────────────────
 
@@ -124,7 +128,7 @@ function scoreTone(total: number): string {
 }
 
 export function TeardownView({ onGoBiz }: { onGoBiz?: () => void }) {
-  const { t, tn } = useI18n();
+  const { t, tn, isEn } = useI18n();
 
   const [title, setTitle] = useState("");
   const [points, setPoints] = useState("");
@@ -139,7 +143,18 @@ export function TeardownView({ onGoBiz }: { onGoBiz?: () => void }) {
   const [report, setReport] = useState<Report | null>(null);
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [copied, setCopied] = useState<string>("");
-  const [tab, setTab] = useState<"single" | "batch" | "compare">("single");
+  const [tab, setTab] = useState<"single" | "batch" | "compare" | "ledger">("single");
+  /**
+   * 报告页脚署名：买家收到文件后要知道「谁出的、怎么找」。存本地，不用账号体系
+   * —— 交付场景里没有登录，加账号只会增加摩擦。
+   */
+  const [brand, setBrand] = useState<string>(() => {
+    try {
+      return localStorage.getItem("sf_report_brand") ?? "";
+    } catch {
+      return "";
+    }
+  });
 
   const mounted = useRef(true);
   useEffect(() => {
@@ -200,6 +215,46 @@ export function TeardownView({ onGoBiz }: { onGoBiz?: () => void }) {
     } finally {
       if (mounted.current) setBusy(false);
     }
+  }
+
+  /** 把当前报告导出成自包含 HTML（含打印样式）：买家双击即看，点按钮存 PDF。 */
+  function downloadReport() {
+    if (!report) return;
+    const html = buildReportHtml({
+      report: {
+        version: report.version,
+        engine: report.engine,
+        category: report.category ?? null,
+        platform: report.platform ?? null,
+        score: report.score,
+        gates: report.gates,
+        issues: report.issues,
+        titles: report.titles,
+        plan: report.plan,
+        counts: report.counts,
+      },
+      listing: {
+        title,
+        points: points
+          .split(/\r?\n/)
+          .map((s) => s.trim())
+          .filter(Boolean),
+      },
+      t,
+      tn,
+      brand: brand.trim() || undefined,
+      isEn,
+    });
+    const blob = new Blob([html], { type: "text/html;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = reportFileName(title);
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    // 立刻 revoke 在部分浏览器会中断下载，延后一拍
+    window.setTimeout(() => URL.revokeObjectURL(url), 4000);
   }
 
   function fillSample() {
@@ -283,6 +338,15 @@ export function TeardownView({ onGoBiz }: { onGoBiz?: () => void }) {
         >
           <BarChart3 size={14} /> {t("改前改后")}
         </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={tab === "ledger"}
+          className={tab === "ledger" ? "on" : ""}
+          onClick={() => setTab("ledger")}
+        >
+          <ShieldCheck size={14} /> {t("证据对账")}
+        </button>
       </div>
 
       {tab === "batch" ? (
@@ -294,6 +358,8 @@ export function TeardownView({ onGoBiz }: { onGoBiz?: () => void }) {
         />
       ) : tab === "compare" ? (
         <TeardownCompare />
+      ) : tab === "ledger" ? (
+        <TeardownLedger />
       ) : (
       <div className="sf-doctor">
         <section className="sf-doctor-form">
@@ -496,6 +562,25 @@ export function TeardownView({ onGoBiz }: { onGoBiz?: () => void }) {
                   </p>
                 )}
               </div>
+            </div>
+
+            <div className="sf-doctor-export">
+              <input
+                className="sf-doctor-export-brand"
+                value={brand}
+                placeholder={t("署名 / 联系方式（印在报告页脚）")}
+                onChange={(e) => {
+                  setBrand(e.target.value);
+                  try {
+                    localStorage.setItem("sf_report_brand", e.target.value);
+                  } catch {
+                    // 隐私模式下写不进，不影响本次导出
+                  }
+                }}
+              />
+              <button type="button" className="sf-doctor-export-btn" onClick={downloadReport}>
+                <Download size={13} /> {t("下载报告")}
+              </button>
             </div>
 
             <div className="sf-doctor-dims">
