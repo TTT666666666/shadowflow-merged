@@ -19,6 +19,7 @@ import {
   Menu,
   MessageSquare,
   MoreHorizontal,
+  ScanSearch,
   Settings,
   ShieldCheck,
   Store,
@@ -94,13 +95,25 @@ import {
 import {
   SettingsView,
 } from "../views/SettingsView";
+import {
+  TeardownView,
+} from "../views/TeardownView";
 
-type View = "chat" | "agents" | "knowledge" | "biz" | "projects" | "schedules" | "settings";
+type View =
+  | "chat"
+  | "agents"
+  | "knowledge"
+  | "biz"
+  | "doctor"
+  | "projects"
+  | "schedules"
+  | "settings";
 
 const viewCopy: Record<Exclude<View, "chat">, { title: string; subtitle: string }> = {
   agents: { title: "Agent 团队", subtitle: "管理角色、能力与协作关系" },
   knowledge: { title: "知识库", subtitle: "管理团队共享的知识与上下文" },
   biz: { title: "生意看板", subtitle: "手工艺品代销：商品、销售、快递、社媒与盈利" },
+  doctor: { title: "商品诊断", subtitle: "贴一份商品页，拿到可执行的改造清单" },
   projects: { title: "工作备忘", subtitle: "个人日程与备忘，随手增删。" },
   schedules: { title: "定时任务", subtitle: "管理所有 Agent 的周期与一次性计划" },
   settings: { title: "设置", subtitle: "模型、Skills、集成、记忆与工作空间" },
@@ -867,6 +880,10 @@ export default function ProductApp() {
             <Store size={17} />
             <span>{t("生意看板")}</span>
           </button>
+          <button className={view === "doctor" ? "active" : ""} onClick={() => navigate("doctor")}>
+            <ScanSearch size={17} />
+            <span>{t("商品诊断")}</span>
+          </button>
         </nav>
 
         <div className="sf-rail-section">
@@ -1117,6 +1134,7 @@ export default function ProductApp() {
             runsSig={chat.runs.map((r) => `${r.session_id}:${r.status}`).join("|")}
           />
         )}
+        {view === "doctor" && <TeardownView onGoBiz={() => navigate("biz")} />}
         {view === "projects" && <MemosView />}
         {view === "schedules" && <SchedulesView />}
         {view === "settings" && <SettingsView />}

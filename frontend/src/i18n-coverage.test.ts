@@ -30,6 +30,7 @@ const FILES = [
   "src/views/KnowledgeView.tsx",
   "src/views/SchedulesView.tsx",
   "src/views/ProjectsView.tsx",
+  "src/views/TeardownView.tsx",
   "src/product-app/ProductApp.tsx",
 ];
 
@@ -115,6 +116,12 @@ const ALLOWED_LINES: Array<{ file: string; re: RegExp; why: string }> = [
     file: "ProductApp.tsx",
     re: /拖入图片-\$\{Date\.now\(\)\}/,
     why: "File 构造用的文件名，不展示",
+  },
+  // 商品诊断的「已有素材」勾选项表：label 是 key，渲染时 t(flag.label)。
+  {
+    file: "TeardownView.tsx",
+    re: /^\s*\{ key: "\w+", label: "/,
+    why: "FLAGS 勾选项表，label 是 key，渲染时 t(flag.label)",
   },
 ];
 

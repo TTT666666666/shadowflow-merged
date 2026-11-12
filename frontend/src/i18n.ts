@@ -724,6 +724,171 @@ const EN: Record<string, string> = {
   游客体验: "Continue as guest",
   登录: "Sign in",
   注册: "Sign up",
+
+  // ── 商品诊断（Listing Doctor）──────────────────────────────────────────
+  "商品诊断": "Listing Doctor",
+  "贴一份商品页，拿到可执行的改造清单":
+    "Paste a product page, get an actionable fix list",
+  "贴一份商品页": "Paste a product page",
+  "卖点（一行一条）": "Selling points (one per line)",
+  "详情 / 描述": "Details / description",
+  "价格（元）": "Price (CNY)",
+  "已有素材（勾了就按有算）": "What you already have (checked = counted)",
+  "材质或工艺": "Material or craft",
+  "检测 / 资质 / 实拍口碑": "Tests, certifications or real reviews",
+  售后承诺: "After-sales promise",
+  发货时效: "Shipping lead time",
+  "对比价或套餐档": "Reference price or bundles",
+  "赠品或包邮": "Gift or free shipping",
+  明确的行动指令: "A clear call to action",
+  "联系方式 / 客服入口": "Contact or support entry",
+  开始诊断: "Run diagnosis",
+  "诊断中…": "Diagnosing…",
+  清空: "Clear",
+  示例: "Example",
+  "总分": "Score",
+  可以上架: "Cleared to list",
+  先别上架: "Hold before listing",
+  "命中合规红线，总分封顶 {cap} 分":
+    "Compliance red line hit — score capped at {cap}",
+  "个问题": "issues",
+  "致命": "Critical",
+  "次要": "Minor",
+  "打磨": "Polish",
+  "{n} 个问题 · 致命 {high} · 次要 {medium} · 打磨 {low}":
+    "{n} issues · {high} critical · {medium} minor · {low} polish",
+  怎么改: "How to fix",
+  证据: "Evidence",
+  "标题改写（填空版）": "Title rewrites (fill-in)",
+  "缺：{slots}": "Missing: {slots}",
+  待补清单: "What's still missing",
+  卖点补一句: "Add a benefit line to",
+  最近的诊断: "Recent diagnoses",
+  还没有诊断记录: "No diagnoses yet",
+  引擎: "Engine",
+  "规则引擎 v1": "Rules engine v1",
+  "规则 + 模型": "Rules + model",
+  "规则引擎，离线可跑，结论可复现":
+    "Rules engine — runs offline, results are reproducible",
+  "把这份清单变成交付": "Turn this list into a delivery",
+  "让团队按清单改一遍文案、主图和详情，交付可用的成稿":
+    "Have the team rewrite copy, hero images and the detail page from this list",
+  去生意看板下单: "Order from the business board",
+  "价格维度未计入": "Price not scored",
+
+  // 维度名
+  "标题力": "Title",
+  "卖点结构": "Selling points",
+  "信任状": "Trust signals",
+  "价格锚点": "Price anchor",
+  "转化路径": "Conversion path",
+  "合规风险": "Compliance risk",
+  // 等级
+  "优秀": "Excellent",
+  "良好": "Good",
+  "待改": "Needs work",
+  "危险": "Risky",
+  // 标题骨架缺位
+  "品名": "Product name",
+  "利益点": "Benefit",
+  "规格": "Spec",
+  "场景": "Occasion",
+  // 待补诉求
+  "补一句「对你有什么用」": "Add what it does for the buyer",
+  "补一条可核验的证据": "Add verifiable proof",
+  "补售后承诺": "Add an after-sales promise",
+  "补发货时效": "Add shipping lead time",
+  "补材质或工艺": "Add material or craft",
+
+  // 问题码：标题力
+  "标题是空的": "The title is empty",
+  "至少写清「是什么 + 给谁用 + 一个规格」，三个信息缺一个都会掉搜索命中。":
+    "State what it is, who it's for, and one spec — missing any of the three costs you search matches.",
+  "标题只有 {length} 字，搜索词挤不进去（建议 {min} 字以上）":
+    "Title is only {length} characters — search terms won't fit (aim for {min}+)",
+  "按「品名 + 关键规格 + 场景或人群」重写，把买家用得到的那几个词放进去。":
+    "Rewrite as name + key spec + occasion or audience, using the words buyers actually search.",
+  "标题 {length} 字，超出常见截断长度（{max} 字内更稳）":
+    "Title is {length} characters — longer than typical truncation (keep within {max})",
+  "把最不重要的形容词删到详情里，标题只留能被搜到的实词。":
+    "Move the least important adjectives into the details; keep only searchable nouns in the title.",
+  "标题里没有任何数字或规格": "No numbers or specs in the title",
+  "把尺寸、容量、数量或时长写进标题——数字是单位字数里最省的说服力。":
+    "Put size, capacity, quantity or duration in the title — numbers persuade hardest per character.",
+  "标题里「{word}」重复出现": "“{word}” repeats in the title",
+  "删掉重复词，把位置让给场景和规格；重复不影响搜索权重，只浪费字数。":
+    "Drop the repeats and give the space to occasion and spec — repetition adds no search weight, only length.",
+  "标题堆了过多符号或表情": "Too many symbols or emoji in the title",
+  "符号最多留 1 个，其余换成实词——平台搜索不认符号，买家也不认。":
+    "Keep at most one symbol; replace the rest with real words — search ignores symbols and so do buyers.",
+
+  // 问题码：卖点结构
+  "卖点只有 {count} 条，撑不起说服（建议 {min} 条起）":
+    "Only {count} selling points — not enough to persuade (aim for {min}+)",
+  "按「功能 / 信任 / 场景」各补一条，三块齐了才有人愿意往下看。":
+    "Add one of each: function, trust, occasion. All three present is what keeps people reading.",
+  "卖点 {count} 条，注意力被分散了（建议 {max} 条内）":
+    "{count} selling points is too many — attention is split (keep within {max})",
+  "只留最能决定下单的 5 条，其余挪进详情页，首屏不要超过一屏。":
+    "Keep the five that decide the purchase, move the rest into the details; keep the first screen to one screen.",
+  "{count}/{total} 条卖点只写了参数，没写对买家有什么用":
+    "{count} of {total} selling points list specs without saying what they do for the buyer",
+  "每条后面补半句「所以你能……」，参数是理由，利益才是买点。":
+    "Append “so you can…” to each — specs are the reason, the benefit is what sells.",
+  "有 {count} 条卖点内容重复": "{count} selling points are duplicates",
+  "把重复项合并成一条，省下的位置写真正的差异点。":
+    "Merge the duplicates into one and use the space for a real differentiator.",
+
+  // 问题码：信任状
+  "没写材质、成分或工艺": "No material, ingredient or craft stated",
+  "买家第一反应是「这是什么东西做的」，一句话交代清楚，别让他猜。":
+    "The first question is “what is this made of” — answer it in one line instead of making them guess.",
+  "没有任何证据：检测、资质、实拍、口碑都没有":
+    "No evidence at all — no tests, certifications, real photos or reviews",
+  "至少放一条可核验的证据；一张实拍图比三个形容词有用。":
+    "Add at least one verifiable proof point; one real photo beats three adjectives.",
+  "没写售后承诺": "No after-sales promise",
+  "写清退换条件与破损补发——这是压掉最后一点犹豫的那句话。":
+    "State return conditions and replacement for damage — that's the line that kills the last hesitation.",
+  "没写发货时效或物流方式": "No shipping lead time or carrier",
+  "写明「几点前下单当天发」「包不包邮」，很多人是因为不确定才不买。":
+    "Say “order before X and it ships today” and whether shipping is free — many people don't buy because they're unsure.",
+
+  // 问题码：价格锚点
+  "没填价格": "No price provided",
+  "填上到手价，诊断才能判断锚点是否成立（不填这一项只影响价格维度）。":
+    "Enter the final price so the anchor can be judged (skipping it only affects the pricing dimension).",
+  "只有单一价格，没有对比锚点": "One price only — no anchor to compare against",
+  "给原价 / 到手价，或做两档套餐——没有对比，「便宜」就不成立。":
+    "Show list price vs final price, or offer two tiers — without a comparison, “cheap” means nothing.",
+  "没提赠品或包邮": "No gift or free shipping mentioned",
+  "加一个小额赠品（贺卡、备用件）或标出包邮，感知价值远高于成本。":
+    "Add a small gift (card, spare part) or mark free shipping — perceived value far exceeds the cost.",
+
+  // 问题码：转化路径
+  "没有明确的行动指令": "No clear call to action",
+  "结尾加一句「点下方立即下单」。不写这一句，很多人看完就走。":
+    "End with “tap below to order now”. Without it, many people just leave.",
+  "只有「{word}」这类模糊指令": "Only a vague call to action: “{word}”",
+  "换成具体动作：立即下单 / 私信报尺寸 / 扫码领券，一步到位。":
+    "Replace with a concrete action: order now, DM your size, or scan for a coupon.",
+  "没留联系方式": "No contact details",
+  "定制类商品必须留私信或客服入口，否则想买的人找不到你。":
+    "Made-to-order items must leave a DM or support entry, otherwise ready buyers can't reach you.",
+  "没写可选规格（颜色 / 尺寸 / 款式）": "No selectable options (color, size, style)",
+  "列出可选档位，买家会自己对号入座，减少来回问价。":
+    "List the options so buyers can self-select and stop asking back and forth.",
+
+  // 问题码：合规风险
+  "出现极限词「{word}」": "Superlative term found: “{word}”",
+  "广告法禁止最高级表述，换成可核验的具体描述（材质、参数、实测数据）。":
+    "Advertising law bans superlatives — replace with verifiable specifics (material, specs, measured data).",
+  "出现功效宣称「{word}」": "Efficacy claim found: “{word}”",
+  "普通商品不能宣称疗效，删掉或改成使用体验描述，否则有下架风险。":
+    "Ordinary goods can't claim medical effects — remove it or describe the experience instead, or risk delisting.",
+  "出现绝对承诺「{word}」": "Absolute guarantee found: “{word}”",
+  "改成有条件承诺，例如「非人为损坏 7 天内可退」，比空头保证更可信。":
+    "Turn it into a conditional promise, e.g. “7-day return for non-human damage” — more credible than a blanket guarantee.",
 };
 
 export type Locale = "zh-CN" | "en-US";

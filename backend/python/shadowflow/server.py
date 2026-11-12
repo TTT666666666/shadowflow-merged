@@ -228,6 +228,7 @@ from shadowflow.api.system import wallet as _wallet_api
 from shadowflow.api.runs import runs as _runs_api
 from shadowflow.api.runs import artifacts as _artifacts_api
 from shadowflow.api.opc import opc as _opc_api
+from shadowflow.api.teardown import teardown as _teardown_api
 
 # 多模态记忆库（PR #7 设计移植）：单文件 RAG 后端，BM25+向量混合检索。
 # 挂 /api/memory-bank 前缀，与 /api/knowledge、/api/memory 互不冲突；
@@ -298,6 +299,9 @@ app.include_router(_artifacts_api.router)
 # OPC OS（2026-11-04，backend-poc company/orders/pay 移植）：组织 / 项目 /
 # 审批 / 账本 / 商品 / 订单 / 支付网关，独立 opc.sqlite，全部挂 /api/opc 前缀。
 app.include_router(_opc_api.router)
+# 商品页诊断（2026-11-12）：规则引擎出「改造清单」，把「卖不动」翻译成可执行动作。
+# 报告落在 .shadowflow/teardown/（可用 SHADOWFLOW_TEARDOWN_DIR 覆盖）。
+app.include_router(_teardown_api.router)
 # 多模态记忆库（PR #7）：/api/memory-bank，Node proxyFallback 自动转发。
 app.include_router(_create_memory_bank_router(memory_bank))
 
