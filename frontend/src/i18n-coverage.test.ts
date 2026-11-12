@@ -31,6 +31,7 @@ const FILES = [
   "src/views/SchedulesView.tsx",
   "src/views/ProjectsView.tsx",
   "src/views/TeardownView.tsx",
+  "src/views/TeardownBatch.tsx",
   "src/product-app/ProductApp.tsx",
 ];
 

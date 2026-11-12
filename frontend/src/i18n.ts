@@ -889,6 +889,45 @@ const EN: Record<string, string> = {
   "出现绝对承诺「{word}」": "Absolute guarantee found: “{word}”",
   "改成有条件承诺，例如「非人为损坏 7 天内可退」，比空头保证更可信。":
     "Turn it into a conditional promise, e.g. “7-day return for non-human damage” — more credible than a blanket guarantee.",
+
+  // 批量诊断（P0：代运营 / 内容工作室）
+  单条诊断: "Single listing",
+  批量诊断: "Batch diagnosis",
+  "贴一份商品表": "Paste a product table",
+  "逐条复用同一套规则，脏数据不拖垮整批":
+    "Same rules applied to every row; one bad row won't sink the batch",
+  "CSV 列：标题 / 卖点 / 详情 / 价格 / 已有素材":
+    "CSV columns: title / points / detail / price / assets",
+  "卖点用竖线分隔，价格按元填写": "Separate selling points with | ; enter price in CNY",
+  "单次最多 {n} 条": "Up to {n} rows per run",
+  填入示例表格: "Fill sample table",
+  复制空白模板: "Copy blank template",
+  "上传 CSV 文件": "Upload CSV file",
+  "CSV 内容": "CSV content",
+  "批次名称（选填）": "Batch name (optional)",
+  "白标抬头（选填）": "White-label header (optional)",
+  开始批量诊断: "Run batch diagnosis",
+  历史批次: "Past batches",
+  未命名批次: "Untitled batch",
+  "{n} 条": "{n} rows",
+  "一次交一份可验收的报告": "One run, one deliverable report",
+  "共 {n} 条 · 成功 {ok} · 失败 {failed}": "{n} rows · {ok} done · {failed} failed",
+  "平均分 {avg}": "Average {avg}",
+  "被合规拦下 {n} 条": "{n} blocked by compliance",
+  "潜在罚单敞口 ¥{amount}": "Potential penalty exposure ¥{amount}",
+  "按公开处罚案例 2 万元/张估算": "Estimated from published ¥20,000 penalty cases",
+  "导出 CSV": "Export CSV",
+  "导出 JSON": "Export JSON",
+  序号: "Row",
+  商品标题: "Product title",
+  等级: "Grade",
+  能否上架: "Can list",
+  问题数: "Issues",
+  查看: "View",
+  失败原因: "Failure reason",
+  "请粘贴 CSV 或上传文件": "Paste CSV content or upload a file first",
+  "只支持 .csv 文件": "Only .csv files are supported",
+  文件读取失败: "Could not read the file",
 };
 
 export type Locale = "zh-CN" | "en-US";

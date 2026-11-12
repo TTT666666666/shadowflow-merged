@@ -24,6 +24,9 @@ backend/node/.shadowflow/
 .sf-token
 .e2e-fixtures/
 .workbuddy/memory/
+# 本地调试产物（截图、临时脚本、commit message 草稿）与去重备份，不入库
+.workbuddy/tmp/
+.workbuddy/backup/
 
 # Python 后端运行时数据（群 JSON、runtime.sqlite、tool schema 缓存）不入库
 backend/python/.shadowflow/

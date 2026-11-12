@@ -12,6 +12,7 @@ import {
   AlertTriangle,
   Check,
   ClipboardCopy,
+  Layers,
   Loader2,
   RotateCcw,
   ScanSearch,
@@ -21,6 +22,7 @@ import {
 } from "lucide-react";
 import { useI18n } from "../i18n";
 import { sfFetch } from "./shared";
+import { TeardownBatch } from "./TeardownBatch";
 import {
   DIM_LABEL,
   DIM_ORDER,
@@ -125,6 +127,7 @@ export function TeardownView({ onGoBiz }: { onGoBiz?: () => void }) {
   const [report, setReport] = useState<Report | null>(null);
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [copied, setCopied] = useState<string>("");
+  const [tab, setTab] = useState<"single" | "batch">("single");
 
   const mounted = useRef(true);
   useEffect(() => {
@@ -229,11 +232,42 @@ export function TeardownView({ onGoBiz }: { onGoBiz?: () => void }) {
           <h1>{t("商品诊断")}</h1>
           <span>{t("贴一份商品页，拿到可执行的改造清单")}</span>
         </div>
-        <button onClick={fillSample} type="button">
-          <Sparkles size={15} /> {t("示例")}
+        {tab === "single" && (
+          <button onClick={fillSample} type="button">
+            <Sparkles size={15} /> {t("示例")}
+          </button>
+        )}
+      </div>
+
+      <div className="sf-doctor-tabs" role="tablist">
+        <button
+          type="button"
+          role="tab"
+          aria-selected={tab === "single"}
+          className={tab === "single" ? "on" : ""}
+          onClick={() => setTab("single")}
+        >
+          <ScanSearch size={14} /> {t("单条诊断")}
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={tab === "batch"}
+          className={tab === "batch" ? "on" : ""}
+          onClick={() => setTab("batch")}
+        >
+          <Layers size={14} /> {t("批量诊断")}
         </button>
       </div>
 
+      {tab === "batch" ? (
+        <TeardownBatch
+          onOpenReport={(id) => {
+            setTab("single");
+            void openHistory(id);
+          }}
+        />
+      ) : (
       <div className="sf-doctor">
         <section className="sf-doctor-form">
           <div className="sf-doctor-head">
@@ -515,6 +549,7 @@ export function TeardownView({ onGoBiz }: { onGoBiz?: () => void }) {
         )}
         </section>
       </div>
+      )}
     </section>
   );
 

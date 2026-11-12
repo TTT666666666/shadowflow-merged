@@ -7446,3 +7446,195 @@ html[data-sf-motion="reduce"] *::after {
   border: 1px dashed #e6c9a2;
   border-radius: 5px;
 }
+
+/* ── 批量诊断（P0：代运营，2026-11-12）─────────────────────────────────────── */
+.sf-doctor-tabs {
+  display: inline-flex;
+  gap: 4px;
+  margin-top: 22px;
+  padding: 4px;
+  background: #f3efe8;
+  border: 1px solid #ded7cc;
+  border-radius: 10px;
+}
+.sf-doctor-tabs button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 15px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #6d665c;
+  background: transparent;
+  border: 0;
+  border-radius: 7px;
+  cursor: pointer;
+}
+.sf-doctor-tabs button:hover { color: #17162d; }
+.sf-doctor-tabs button.on {
+  color: #17162d;
+  background: #fffdf9;
+  box-shadow: 0 1px 3px rgba(23, 22, 45, 0.1);
+}
+
+.sf-batch {
+  display: grid;
+  grid-template-columns: 420px minmax(0, 1fr);
+  gap: 16px;
+  margin-top: 14px;
+  align-items: start;
+}
+.sf-batch-form,
+.sf-batch-result {
+  background: #fffdf9;
+  border: 1px solid #ded7cc;
+  border-radius: 14px;
+  box-shadow: 0 1px 2px rgba(23, 22, 45, 0.03);
+  padding: 18px 20px 20px;
+}
+.sf-batch-form {
+  position: sticky;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 13px;
+}
+.sf-batch-hint {
+  margin: 0;
+  padding: 10px 12px;
+  font-size: 11.5px;
+  line-height: 1.7;
+  color: #6d665c;
+  background: #f8f4ec;
+  border-radius: 8px;
+}
+.sf-batch-hint span { color: #9a8f7e; }
+.sf-batch-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.sf-batch-tools button,
+.sf-batch-upload {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 11px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #5c554a;
+  background: #fffdf9;
+  border: 1px solid #ded7cc;
+  border-radius: 7px;
+  cursor: pointer;
+}
+.sf-batch-tools button:hover,
+.sf-batch-upload:hover { color: #17162d; border-color: #b9b0a0; }
+.sf-batch-upload input { display: none; }
+.sf-batch-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.sf-batch-meta .sf-doctor-field { min-width: 0; }
+
+.sf-batch-result .sf-doctor-empty { min-height: 280px; }
+.sf-batch-summary {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 14px 16px;
+  background: #f8f4ec;
+  border: 1px solid #eae2d5;
+  border-radius: 10px;
+}
+.sf-batch-summary > div { display: flex; flex-direction: column; gap: 4px; }
+.sf-batch-summary span { font-size: 11.5px; color: #6d665c; }
+.sf-batch-summary strong { font-size: 20px; font-weight: 700; color: #17162d; }
+.sf-batch-risk { text-align: right; }
+.sf-batch-risk > span { display: inline-flex; align-items: center; gap: 5px; color: #b0466d; }
+.sf-batch-risk strong { color: #b0466d; }
+.sf-batch-risk em { font-size: 10.5px; font-style: normal; color: #9a8f7e; }
+
+.sf-batch-exports {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 14px 0 10px;
+}
+.sf-batch-exports button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 7px 13px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #fff;
+  background: #17162d;
+  border: 0;
+  border-radius: 7px;
+  cursor: pointer;
+}
+.sf-batch-exports button:hover { background: #33305a; }
+.sf-batch-brand {
+  margin-left: auto;
+  font-size: 11px;
+  color: #9a8f7e;
+}
+
+.sf-batch-table-wrap { overflow-x: auto; }
+.sf-batch-table { width: 100%; border-collapse: collapse; font-size: 11.5px; }
+.sf-batch-table th {
+  padding: 9px 8px;
+  text-align: left;
+  font-weight: 600;
+  color: #8c8375;
+  border-bottom: 1px solid #ded7cc;
+  white-space: nowrap;
+}
+.sf-batch-table td {
+  padding: 10px 8px;
+  border-bottom: 1px solid #f0ebe1;
+  color: #3c382f;
+  vertical-align: middle;
+}
+.sf-batch-table tr.failed td { background: #fdf4f4; }
+.sf-batch-table td.title { min-width: 220px; font-weight: 600; }
+.sf-batch-table td.title em {
+  display: block;
+  margin-top: 3px;
+  font-size: 10.5px;
+  font-style: normal;
+  font-weight: 400;
+  color: #9a8f7e;
+}
+.sf-batch-table td b { font-size: 14px; }
+.sf-batch-table td button {
+  padding: 4px 9px;
+  font-size: 11px;
+  color: #2777e8;
+  background: transparent;
+  border: 1px solid #c9dcf8;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.sf-batch-table td button:hover { background: #f0f6ff; }
+.sf-batch-gate {
+  display: inline-block;
+  padding: 3px 8px;
+  font-size: 10.5px;
+  border-radius: 5px;
+  white-space: nowrap;
+}
+.sf-batch-gate.ok { color: #0d857f; background: #e8f7f5; }
+.sf-batch-gate.blocked { color: #b0466d; background: #fdeef3; }
+
+/* 结果表有 7 列，窄屏并排会把「查看」挤到横向滚动条后面 —— 代运营点不到。
+   因此在 1480px 以下直接改成上下堆叠，让表格拿到整幅宽度。 */
+@media (max-width: 1480px) {
+  .sf-batch { grid-template-columns: 1fr; }
+  .sf-batch-form { position: static; }
+  .sf-batch-risk { text-align: left; }
+  .sf-batch-form .sf-doctor-field textarea { min-height: 150px; }
+}
+@media (max-width: 1180px) {
+  .sf-batch-meta { grid-template-columns: 1fr; }
+  .sf-batch-table td.title { min-width: 160px; }
+}
