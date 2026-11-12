@@ -67,14 +67,35 @@ describe("buildReportHtml", () => {
     expect(html).toContain("不构成法律意见");
   });
 
-  it("问题按致命 / 次要分组，未知问题码回退成原始码不崩", () => {
+  it("问题按「合规红线 / 扣分项 / 打磨」分组，未知问题码回退成原始码不崩", () => {
     const html = render();
     expect(html).toContain("必须改（不改会被下架或罚款）");
-    expect(html).toContain("建议改（直接影响转化）");
+    expect(html).toContain("建议改（扣分项，影响成交）");
     // 有文案的码渲染成人话
     expect(html).toContain("全网最低价");
     // 没文案的码原样露出，方便发现漏登记（而不是静默消失）
     expect(html).toContain("title.unmapped_code");
+  });
+
+  /**
+   * 这条守的是报告的「权威性」：如果「必须改」里混进转化问题，
+   * 买家会发现其中几条其实不违法，于是整份报告的警告都被打折。
+   * 第一组必须与 gates.blocked_by 同源 —— 只放真会拦上架的合规红线。
+   */
+  it("「必须改」只放合规红线，转化类致命问题降级到「建议改」", () => {
+    const report = fixture();
+    report.issues = [
+      ...report.issues,
+      { id: "trust.no_proof", dim: "trust", severity: "high", evidence: "", params: {} },
+    ];
+    const html = render({ report });
+
+    const headRed = html.indexOf("必须改（不改会被下架或罚款）");
+    const headFix = html.indexOf("建议改（扣分项，影响成交）");
+    expect(headRed).toBeGreaterThan(-1);
+    expect(headFix).toBeGreaterThan(headRed);
+    // 转化类的 high（没证据）排在第一组之后，不冒充违法
+    expect(html.indexOf("没有任何证据")).toBeGreaterThan(headFix);
   });
 
   it("商品标题里的脚本被转义，不会把报告变成可执行页面", () => {

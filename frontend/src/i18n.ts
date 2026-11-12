@@ -935,6 +935,7 @@ const EN: Record<string, string> = {
   "署名 / 联系方式（印在报告页脚）": "Signature / contact (printed in footer)",
   "必须改（不改会被下架或罚款）": "Must fix — risk of takedown or fine",
   "建议改（直接影响转化）": "Should fix — hurts conversion",
+  "建议改（扣分项，影响成交）": "Should fix — costs you points and sales",
   可选打磨: "Optional polish",
   "命中 {n} 项合规红线，逐条见下方「必须改」":
     "{n} compliance red-line checks triggered — see “Must fix” below",

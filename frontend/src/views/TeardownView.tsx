@@ -150,9 +150,11 @@ export function TeardownView({ onGoBiz }: { onGoBiz?: () => void }) {
    */
   const [brand, setBrand] = useState<string>(() => {
     try {
-      return localStorage.getItem("sf_report_brand") ?? "";
+      // 默认填 Fiverr 橱窗地址：报告是发给陌生买家的，页脚必须留一个能找回人的入口。
+      // 不填邮箱/微信 —— Fiverr 禁止引导站外交易，写了会被判违规。
+      return localStorage.getItem("sf_report_brand") ?? "fiverr.com/terrylisting";
     } catch {
-      return "";
+      return "fiverr.com/terrylisting";
     }
   });
 
@@ -568,7 +570,7 @@ export function TeardownView({ onGoBiz }: { onGoBiz?: () => void }) {
               <input
                 className="sf-doctor-export-brand"
                 value={brand}
-                placeholder={t("署名 / 联系方式（印在报告页脚）")}
+                placeholder="fiverr.com/terrylisting"
                 onChange={(e) => {
                   setBrand(e.target.value);
                   try {

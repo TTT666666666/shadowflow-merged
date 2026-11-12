@@ -84,7 +84,37 @@ function stamp(date: Date): string {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }
 
-const SEVERITY_ORDER: IssueSeverity[] = ["high", "medium", "low"];
+/**
+ * 报告分组：按「这条问题的性质」而不是严重度一刀切。
+ *
+ * 之前按 severity 分三组，结果是「卖点没说利益点」「没有行动指令」这类转化问题
+ * 被塞进「必须改」，和真会被下架的红线混在一起。买家看到 8 条"必须改"里有 3 条
+ * 其实不违法，就会觉得这工具什么都不合格，反而削弱真红线的权威性。
+ *
+ * 所以第一组只放「dim=compliance 且 severity=high」——也就是真正让 can_list=false
+ * 的那批（和 gates.blocked_by 同源），语义才站得住。
+ */
+interface IssueGroup {
+  key: "red" | "fix" | "polish";
+  tone: string;
+  heading: string;
+  rows: ReportLike["issues"];
+}
+
+function groupIssues(issues: ReportLike["issues"]): IssueGroup[] {
+  const isRedline = (i: ReportLike["issues"][number]) =>
+    i.dim === "compliance" && i.severity === "high";
+
+  const red = issues.filter(isRedline);
+  const fix = issues.filter((i) => !isRedline(i) && i.severity !== "low");
+  const polish = issues.filter((i) => !isRedline(i) && i.severity === "low");
+
+  return [
+    { key: "red" as const, tone: "#c0392b", heading: "必须改（不改会被下架或罚款）", rows: red },
+    { key: "fix" as const, tone: "#a0641a", heading: "建议改（扣分项，影响成交）", rows: fix },
+    { key: "polish" as const, tone: "#5a5a5a", heading: "可选打磨", rows: polish },
+  ];
+}
 
 const SEVERITY_TONE: Record<IssueSeverity, string> = {
   high: "#c0392b",
@@ -130,30 +160,27 @@ export function buildReportHtml(input: ReportHtmlInput): string {
   const grade = GRADE_LABEL[report.score.grade] ?? report.score.grade;
   const verdictTone = canList ? "#0b6b6a" : "#c0392b";
 
-  const bySeverity = (sev: IssueSeverity) => report.issues.filter((i) => i.severity === sev);
-
   let issueNo = 0;
-  const sections = SEVERITY_ORDER.map((sev) => {
-    const rows = bySeverity(sev);
-    if (!rows.length) return "";
-    const heading =
-      sev === "high"
-        ? t("必须改（不改会被下架或罚款）")
-        : sev === "medium"
-          ? t("建议改（直接影响转化）")
-          : t("可选打磨");
-    const body = rows
-      .map((issue) => issueRow(issue, ++issueNo, t, tn))
-      .join("");
-    return `
+  const sections = groupIssues(report.issues)
+    .filter((g) => g.rows.length > 0)
+    .map((group) => {
+      const heading =
+        group.key === "red"
+          ? t("必须改（不改会被下架或罚款）")
+          : group.key === "fix"
+            ? t("建议改（扣分项，影响成交）")
+            : t("可选打磨");
+      const body = group.rows.map((issue) => issueRow(issue, ++issueNo, t, tn)).join("");
+      return `
     <section class="block">
-      <h2 class="sec-head" style="border-left-color:${SEVERITY_TONE[sev]}">
+      <h2 class="sec-head" style="border-left-color:${group.tone}">
         ${esc(heading)}
-        <span class="sec-count">${rows.length}</span>
+        <span class="sec-count">${group.rows.length}</span>
       </h2>
       <ol class="items">${body}</ol>
     </section>`;
-  }).join("");
+    })
+    .join("");
 
   const dimRows = DIM_ORDER.map((dim) => {
     const item = report.score.dimensions.find((d) => d.key === dim);
