@@ -110,6 +110,128 @@ SCENE_WORDS = (
     "女生", "男生", "婴儿", "宠物",
 )
 
+# --------------------------------------------------------------------------- 类目词库
+#
+# 通用极限词抓不住类目特有的雷区：「降血糖」在玩具详情页只是句废话，在食品页
+# 就是无证宣称功效；「药妆」「械字号」用在化妆品上一律违规。这些是代运营被罚
+# 得最多、也是竞品按年收费的地方，纯词表规则，零模型成本。
+#
+# 设计取舍：类目词表**不重复收录**通用词（治疗/根治等已在 EFFICACY_WORDS），
+# 否则同一句话会出两张问题卡，用户会以为是 bug。
+
+CATEGORY_LABELS: Dict[str, str] = {
+    "food": "食品/保健",
+    "beauty": "美妆/护肤",
+    "baby": "母婴/玩具",
+    "medical": "器械/消毒",
+}
+
+# 类目 → ((问题码, 严重度, 词表), ...)；问题码即文案表的 key。
+CATEGORY_RULES: Dict[str, tuple] = {
+    "food": (
+        (
+            "compliance.food.efficacy",
+            "high",
+            (
+                "降三高", "降血压", "降血糖", "降血脂", "降尿酸", "降火", "去湿",
+                "排毒", "养胃", "护肝", "助眠", "抗糖", "增强免疫", "提高免疫",
+                "调理", "防癌", "抗癌", "无副作用", "无添加蔗糖", "代餐瘦身",
+            ),
+        ),
+        (
+            "compliance.food.cert",
+            "high",
+            (
+                "零添加", "无添加", "纯天然", "天然无添加", "有机", "无公害",
+                "绿色食品", "非转基因", "0糖0卡", "零卡", "孕妇可用", "宝宝可食",
+            ),
+        ),
+    ),
+    "beauty": (
+        (
+            "compliance.beauty.drug",
+            "high",
+            ("药妆", "医学护肤", "医用级", "械字号", "医生推荐", "医院同款", "处方级"),
+        ),
+        (
+            "compliance.beauty.whiten",
+            "high",
+            ("美白", "祛斑", "淡斑", "祛黄", "白一个度", "全身美白"),
+        ),
+        (
+            "compliance.beauty.function",
+            "medium",
+            ("抗皱", "去皱", "祛痘", "缩毛孔", "去黑头", "防脱", "生发", "去疤"),
+        ),
+    ),
+    "baby": (
+        (
+            "compliance.baby.claim",
+            "high",
+            (
+                "益智", "开发智力", "促进大脑发育", "提高智力", "增强抵抗力",
+                "可食用", "食品级", "无激素", "绝对安全", "宝宝可以咬", "可啃咬",
+                "零甲醛", "无毒无害",
+            ),
+        ),
+    ),
+    "medical": (
+        (
+            "compliance.medical.claim",
+            "high",
+            ("疗效", "康复", "医用", "医院同款", "替代药物", "辅助治疗", "降血压"),
+        ),
+        (
+            "compliance.medical.cert",
+            "medium",
+            ("消毒", "抑菌", "灭菌", "除菌", "械字号", "消字号"),
+        ),
+    ),
+}
+
+# 自动识别类目：只在标题/卖点/详情里出现明确的品类词时才启用，
+# 宁可漏判也不误判——误判会把正常文案判成违规，比漏判更伤信任。
+CATEGORY_HINTS: Dict[str, tuple] = {
+    "food": (
+        "零食", "食品", "饮片", "茶叶", "咖啡", "坚果", "糕点", "糖果", "蜂蜜",
+        "代餐", "保健", "膳食", "调味", "米面", "粮油", "饮品", "酒",
+    ),
+    "beauty": (
+        "面膜", "面霜", "精华", "水乳", "爽肤水", "洗面奶", "口红", "粉底",
+        "护肤", "彩妆", "香水", "防晒", "眼霜", "身体乳", "洗发水", "沐浴露",
+    ),
+    "baby": (
+        "婴儿", "宝宝", "儿童", "玩具", "奶瓶", "纸尿裤", "童装", "绘本",
+        "拼图", "积木", "辅食", "婴儿车", "推车",
+    ),
+    "medical": (
+        "口罩", "理疗", "按摩仪", "血压计", "血糖仪", "护腰", "护膝", "膏药",
+        "敷料", "创可贴", "雾化", "制氧", "医用",
+    ),
+}
+
+_GENERAL_COMPLIANCE = set(ABSOLUTE_WORDS) | set(EFFICACY_WORDS) | set(GUARANTEE_WORDS)
+
+
+def _strip_dupes(words: Sequence[str]) -> tuple:
+    return tuple(w for w in words if w not in _GENERAL_COMPLIANCE)
+
+
+CATEGORY_RULES = {
+    cat: tuple((code, sev, _strip_dupes(words)) for code, sev, words in rules)
+    for cat, rules in CATEGORY_RULES.items()
+}
+
+
+def detect_category(text: str) -> Optional[str]:
+    """按品类词猜类目；猜不出返回 None（此时只跑通用合规）。"""
+    best, best_hits = None, 0
+    for cat, hints in CATEGORY_HINTS.items():
+        hits = sum(1 for h in hints if h in text)
+        if hits > best_hits:
+            best, best_hits = cat, hits
+    return best
+
 _NUM_TOKEN_RE = re.compile(
     r"\d+(?:\.\d+)?\s*(?:cm|mm|m|kg|g|ml|l|寸|英寸|天|日|小时|分钟|年|件|只|个|片|套|色|w|v|mah)",
     re.IGNORECASE,
@@ -292,7 +414,7 @@ def _check_conversion(payload: Mapping[str, Any], text: str) -> List[Dict[str, A
     return issues
 
 
-def _check_compliance(text: str) -> List[Dict[str, Any]]:
+def _check_compliance(text: str, category: Optional[str] = None) -> List[Dict[str, Any]]:
     issues: List[Dict[str, Any]] = []
     for code, severity, words in (
         ("compliance.absolute", "high", ABSOLUTE_WORDS),
@@ -303,6 +425,24 @@ def _check_compliance(text: str) -> List[Dict[str, Any]]:
         if hit:
             count = sum(1 for w in words if w.lower() in text.lower())
             issues.append(_issue(code, "compliance", severity, hit, word=hit, count=count))
+
+    if category in CATEGORY_RULES:
+        for code, severity, words in CATEGORY_RULES[category]:
+            hit = _hit(text, words)
+            if hit:
+                count = sum(1 for w in words if w.lower() in text.lower())
+                issues.append(
+                    _issue(
+                        code,
+                        "compliance",
+                        severity,
+                        hit,
+                        word=hit,
+                        count=count,
+                        category=category,
+                        category_label=CATEGORY_LABELS.get(category, category),
+                    )
+                )
     return issues
 
 
@@ -411,13 +551,21 @@ def analyze(payload: Mapping[str, Any], enhance: Optional[Any] = None) -> Dict[s
     points = _as_list(payload.get("points"))
     text = _corpus(payload, points)
 
+    wanted = str(payload.get("category") or "").strip().lower()
+    if wanted in CATEGORY_RULES:
+        category, category_detected = wanted, False
+    elif wanted in ("", "auto"):
+        category, category_detected = detect_category(text), True
+    else:
+        category, category_detected = None, False
+
     issues: List[Dict[str, Any]] = []
     issues += _check_title(title)
     issues += _check_points(points)
     issues += _check_trust(payload, text)
     issues += _check_pricing(payload, text)
     issues += _check_conversion(payload, text)
-    issues += _check_compliance(text)
+    issues += _check_compliance(text, category)
 
     by_dim = {dim: [i for i in issues if i["dim"] == dim] for dim in DIM_ORDER}
     dim_scores = {dim: _score_dim(by_dim[dim]) for dim in DIM_ORDER}
@@ -435,6 +583,11 @@ def analyze(payload: Mapping[str, Any], enhance: Optional[Any] = None) -> Dict[s
     report: Dict[str, Any] = {
         "version": 1,
         "engine": "rules",
+        "category": {
+            "key": category,
+            "label": CATEGORY_LABELS.get(category) if category else None,
+            "detected": bool(category_detected and category),
+        },
         "score": {
             "total": total,
             "grade": _grade(total),

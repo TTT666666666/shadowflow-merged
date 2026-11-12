@@ -6993,6 +6993,7 @@ html[data-sf-motion="reduce"] *::after {
   letter-spacing: 0.01em;
 }
 .sf-doctor-field input,
+.sf-doctor-field select,
 .sf-doctor-field textarea {
   width: 100%;
   box-sizing: border-box;
@@ -7009,11 +7010,30 @@ html[data-sf-motion="reduce"] *::after {
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 .sf-doctor-field input:focus,
+.sf-doctor-field select:focus,
 .sf-doctor-field textarea:focus {
   border-color: #ff5e3a;
   box-shadow: 0 0 0 3px rgba(255, 94, 58, 0.1);
 }
 .sf-doctor-field--short input { max-width: 150px; }
+
+/* 价格 + 类目并排：类目决定跑哪套合规词库，不该藏进「更多设置」 */
+.sf-doctor-inline {
+  display: grid;
+  grid-template-columns: 1fr 1.4fr;
+  gap: 10px;
+  align-items: end;
+}
+.sf-doctor-inline .sf-doctor-field--short input { max-width: none; }
+.sf-doctor-cat {
+  display: inline-block;
+  margin-top: 6px;
+  padding: 3px 8px;
+  font-size: 10.5px;
+  color: #5c554a;
+  background: #f3efe8;
+  border-radius: 5px;
+}
 
 .sf-doctor-flags > p {
   font-size: 11.5px;

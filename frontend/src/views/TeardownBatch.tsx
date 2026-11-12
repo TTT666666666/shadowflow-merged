@@ -22,7 +22,12 @@ import { useI18n } from "../i18n";
 import { getAuthSnapshot } from "../auth";
 import { SF_API_BASE } from "../chat-api";
 import { sfFetch } from "./shared";
-import { BATCH_SAMPLE_CSV, BATCH_TEMPLATE_CSV, GRADE_LABEL } from "../teardown-copy";
+import {
+  BATCH_SAMPLE_CSV,
+  BATCH_TEMPLATE_CSV,
+  CATEGORY_OPTIONS,
+  GRADE_LABEL,
+} from "../teardown-copy";
 
 interface BatchItem {
   row: number;
@@ -92,6 +97,7 @@ export function TeardownBatch({ onOpenReport }: { onOpenReport?: (id: string) =>
   const [csv, setCsv] = useState("");
   const [label, setLabel] = useState("");
   const [brand, setBrand] = useState("");
+  const [category, setCategory] = useState("auto");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [result, setResult] = useState<BatchRecord | null>(null);
@@ -130,7 +136,12 @@ export function TeardownBatch({ onOpenReport }: { onOpenReport?: (id: string) =>
     try {
       const res = await sfFetch<BatchRecord>("/api/teardown/batch", {
         method: "POST",
-        body: JSON.stringify({ csv, label: label.trim(), brand: brand.trim() }),
+        body: JSON.stringify({
+          csv,
+          label: label.trim(),
+          brand: brand.trim(),
+          category,
+        }),
       });
       if (!mounted.current) return;
       setResult(res);
@@ -251,6 +262,17 @@ export function TeardownBatch({ onOpenReport }: { onOpenReport?: (id: string) =>
             <input value={brand} onChange={(e) => setBrand(e.target.value)} maxLength={120} />
           </label>
         </div>
+
+        <label className="sf-doctor-field">
+          <span>{t("默认类目（CSV 里没有「类目」列时用它）")}</span>
+          <select value={category} onChange={(e) => setCategory(e.target.value)}>
+            {CATEGORY_OPTIONS.map((opt) => (
+              <option key={opt.key} value={opt.key}>
+                {t(opt.label)}
+              </option>
+            ))}
+          </select>
+        </label>
 
         {error && (
           <p className="sf-doctor-error" role="alert">

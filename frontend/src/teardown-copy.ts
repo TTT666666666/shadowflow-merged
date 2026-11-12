@@ -57,6 +57,23 @@ export const GRADE_LABEL: Record<string, string> = {
   risky: "危险",
 };
 
+/**
+ * 类目选项：key 与后端 `category` 一一对应。
+ * 「自动识别」是默认值——猜不出品类时只跑通用极限词，不会误判。
+ */
+export const CATEGORY_OPTIONS: { key: string; label: string }[] = [
+  { key: "auto", label: "自动识别" },
+  { key: "food", label: "食品 / 保健" },
+  { key: "beauty", label: "美妆 / 护肤" },
+  { key: "baby", label: "母婴 / 玩具" },
+  { key: "medical", label: "器械 / 消毒" },
+];
+
+export function categoryLabel(key?: string | null): string {
+  if (!key) return "";
+  return CATEGORY_OPTIONS.find((o) => o.key === key)?.label ?? key;
+}
+
 /** 标题骨架缺哪一段（后端 `titles[].missing`）。 */
 export const SLOT_LABEL: Record<string, string> = {
   name: "品名",
@@ -183,6 +200,40 @@ export const ISSUE_COPY: Record<string, IssueCopy> = {
   "compliance.guarantee": {
     title: "出现绝对承诺「{word}」",
     fix: "改成有条件承诺，例如「非人为损坏 7 天内可退」，比空头保证更可信。",
+  },
+
+  // ── 类目专属（食品 / 美妆 / 母婴 / 器械）───────────────────────────────
+  "compliance.food.efficacy": {
+    title: "「{word}」是食品功效宣称，普通食品不能这么说",
+    fix: "普通食品只能讲配料、口感、吃法。要讲功效必须有保健食品批号并按批准范围写，否则删掉，换成「配料表只有 3 项」这类事实。",
+  },
+  "compliance.food.cert": {
+    title: "「{word}」是需要资质背书的宣称",
+    fix: "有机要有有机认证证书号，纯天然/零添加都需检测依据（零添加 2027 年起也禁止标注）。改成可核验的事实，例如「配料表：核桃仁、腰果」。",
+  },
+  "compliance.beauty.drug": {
+    title: "「{word}」在化妆品上属禁用表述",
+    fix: "化妆品不得出现药妆、医用、械字号、医生推荐等医疗暗示。改成成分与肤感描述：「敏感肌可用」→「含神经酰胺，质地清爽」。",
+  },
+  "compliance.beauty.whiten": {
+    title: "「{word}」属特殊化妆品功效，必须有注册证号",
+    fix: "美白祛斑要按特殊化妆品注册，页面须标「国妆特字」编号。没有证就删掉，改成「提亮肤色、改善暗沉」并只描述使用感受。",
+  },
+  "compliance.beauty.function": {
+    title: "「{word}」是需要功效评价备案的宣称",
+    fix: "抗皱、祛痘、缩毛孔、防脱等 2021 年起须提交功效评价报告。没做评价就删掉，只写成分、质地、适用肤质。",
+  },
+  "compliance.baby.claim": {
+    title: "「{word}」在母婴 / 玩具类属违规宣称",
+    fix: "玩具不能宣称益智、可食用、食品级、无毒无害；婴幼儿食品不能宣称提高智力。改成可验证参数：适用年龄、材质、3C 证书编号。",
+  },
+  "compliance.medical.claim": {
+    title: "「{word}」是医疗器械才允许的表述",
+    fix: "非医疗器械不得讲治疗、康复、替代药物。删掉疗效表述，只写适用范围、测量精度、使用方法。",
+  },
+  "compliance.medical.cert": {
+    title: "「{word}」需要相应备案或许可",
+    fix: "消毒、抑菌、灭菌要有卫生安全评价报告与消字号编号。普通清洁用品改成「清洁」「除污」，不要碰杀菌类的词。",
   },
 };
 

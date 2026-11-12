@@ -24,6 +24,7 @@ import { useI18n } from "../i18n";
 import { sfFetch } from "./shared";
 import { TeardownBatch } from "./TeardownBatch";
 import {
+  CATEGORY_OPTIONS,
   DIM_LABEL,
   DIM_ORDER,
   GRADE_LABEL,
@@ -32,6 +33,7 @@ import {
   SAMPLE_LISTING,
   SEVERITY_LABEL,
   SLOT_LABEL,
+  categoryLabel,
   type IssueDim,
   type IssueSeverity,
 } from "../teardown-copy";
@@ -68,6 +70,7 @@ interface TitlePlan {
 interface Report {
   version: number;
   engine: string;
+  category?: { key: string | null; label: string | null; detected: boolean };
   score: { total: number; grade: string; dimensions: DimScore[] };
   gates: { can_list: boolean; blocked_by: string[]; score_cap: number | null };
   issues: IssueItem[];
@@ -120,6 +123,7 @@ export function TeardownView({ onGoBiz }: { onGoBiz?: () => void }) {
   const [points, setPoints] = useState("");
   const [detail, setDetail] = useState("");
   const [price, setPrice] = useState("");
+  const [category, setCategory] = useState("auto");
   const [flags, setFlags] = useState<Record<string, boolean>>({});
 
   const [busy, setBusy] = useState(false);
@@ -171,6 +175,7 @@ export function TeardownView({ onGoBiz }: { onGoBiz?: () => void }) {
           .filter(Boolean),
         detail: detail.trim(),
         price_cents: price.trim() === "" ? null : Math.round(Number(price) * 100),
+        category,
         flags,
       };
       const res = await sfFetch<{ report_id: string; report: Report }>(
@@ -193,6 +198,7 @@ export function TeardownView({ onGoBiz }: { onGoBiz?: () => void }) {
     setPoints(SAMPLE_LISTING.points);
     setDetail(SAMPLE_LISTING.detail);
     setPrice(SAMPLE_LISTING.price);
+    setCategory("auto");
     setFlags({});
     setReport(null);
     setError("");
@@ -203,6 +209,7 @@ export function TeardownView({ onGoBiz }: { onGoBiz?: () => void }) {
     setPoints("");
     setDetail("");
     setPrice("");
+    setCategory("auto");
     setFlags({});
     setReport(null);
     setError("");
@@ -307,15 +314,28 @@ export function TeardownView({ onGoBiz }: { onGoBiz?: () => void }) {
           />
         </label>
 
-        <label className="sf-doctor-field sf-doctor-field--short">
-          <span>{t("价格（元）")}</span>
-          <input
-            value={price}
-            onChange={(e) => setPrice(e.target.value.replace(/[^\d.]/g, ""))}
-            inputMode="decimal"
-            placeholder={t("价格（元）")}
-          />
-        </label>
+        <div className="sf-doctor-inline">
+          <label className="sf-doctor-field sf-doctor-field--short">
+            <span>{t("价格（元）")}</span>
+            <input
+              value={price}
+              onChange={(e) => setPrice(e.target.value.replace(/[^\d.]/g, ""))}
+              inputMode="decimal"
+              placeholder={t("价格（元）")}
+            />
+          </label>
+
+          <label className="sf-doctor-field">
+            <span>{t("类目（决定用哪套合规词库）")}</span>
+            <select value={category} onChange={(e) => setCategory(e.target.value)}>
+              {CATEGORY_OPTIONS.map((opt) => (
+                <option key={opt.key} value={opt.key}>
+                  {t(opt.label)}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
 
         <div className="sf-doctor-flags">
           <p>{t("已有素材（勾了就按有算）")}</p>
@@ -413,6 +433,17 @@ export function TeardownView({ onGoBiz }: { onGoBiz?: () => void }) {
                   {report.gates.can_list ? <Check size={12} /> : <ShieldAlert size={12} />}
                   {report.gates.can_list ? t("可以上架") : t("先别上架")}
                 </span>
+                {report.category?.key && (
+                  <span className="sf-doctor-cat">
+                    {report.category.detected
+                      ? tn("自动识别为「{name}」类目", {
+                          name: t(categoryLabel(report.category.key)),
+                        })
+                      : tn("按「{name}」类目校验", {
+                          name: t(categoryLabel(report.category.key)),
+                        })}
+                  </span>
+                )}
                 {report.gates.score_cap != null && (
                   <p className="sf-doctor-cap">
                     {tn("命中合规红线，总分封顶 {cap} 分", { cap: report.gates.score_cap })}

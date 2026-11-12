@@ -45,6 +45,19 @@ _CSV_ALIASES = {
     "detail": "detail", "详情": "detail", "描述": "detail", "商品详情": "detail",
     "price": "price", "价格": "price", "价格(元)": "price", "价格（元）": "price",
     "flags": "flags", "素材": "flags", "已有素材": "flags",
+    "category": "category", "类目": "category", "品类": "category", "行业": "category",
+}
+
+# 类目值别名：CSV 里人写的是「食品」「母婴」，引擎要的是 key。
+_CATEGORY_ALIASES = {
+    "": "auto", "auto": "auto", "自动": "auto", "自动识别": "auto",
+    "food": "food", "食品": "food", "食品饮料": "food", "零食": "food",
+    "保健": "food", "保健品": "food", "生鲜": "food", "饮品类": "food",
+    "beauty": "beauty", "美妆": "beauty", "护肤": "beauty", "化妆品": "beauty",
+    "彩妆": "beauty", "个护": "beauty",
+    "baby": "baby", "母婴": "baby", "玩具": "baby", "儿童": "baby", "童装": "baby",
+    "medical": "medical", "医疗": "medical", "器械": "medical", "消毒": "medical",
+    "医疗器械": "medical", "个护器械": "medical",
 }
 
 
@@ -93,6 +106,9 @@ def _norm_payload(raw: Mapping[str, Any]) -> Dict[str, Any]:
     if not title and not points:
         raise HTTPException(422, "至少需要「标题」或「卖点」其中一项才能诊断")
 
+    category_raw = str(raw.get("category") or "").strip().lower()
+    category = _CATEGORY_ALIASES.get(category_raw, "auto")
+
     return {
         "title": title,
         "points": points,
@@ -100,6 +116,7 @@ def _norm_payload(raw: Mapping[str, Any]) -> Dict[str, Any]:
         "reviews": _clean_field(raw.get("reviews"), 4000),
         "price_cents": price_cents,
         "flags": flags,
+        "category": category,
     }
 
 
@@ -172,6 +189,8 @@ def _parse_csv(text: str) -> List[Dict[str, Any]]:
         flag_keys = [f for f in _split_cell(cells.get("flags")) if f]
         if flag_keys:
             row["flags"] = {f: True for f in flag_keys}
+        if cells.get("category"):
+            row["category"] = cells["category"]  # 行内类目优先于批次级默认值
         rows.append(row)
     return rows
 
@@ -288,6 +307,18 @@ def list_rules():
             "title": [engine.TITLE_MIN, engine.TITLE_MAX],
             "points": [engine.POINTS_MIN, engine.POINTS_MAX],
         },
+        # 类目词库对外自证：界面下拉与「这条为什么被判违规」都靠它
+        "categories": [
+            {
+                "key": key,
+                "label": label,
+                "rules": [
+                    {"code": code, "severity": severity, "words": len(words)}
+                    for code, severity, words in engine.CATEGORY_RULES.get(key, ())
+                ],
+            }
+            for key, label in engine.CATEGORY_LABELS.items()
+        ],
     }
 
 
@@ -318,6 +349,7 @@ def analyze_batch(payload: dict = Body(...)):
 
     label = _clean_field(payload.get("label"), 120)
     brand = _clean_field(payload.get("brand"), 120)
+    default_category = payload.get("category") or "auto"
     batch_id = f"tb-{uuid.uuid4().hex[:12]}"
     created_at = _now()
     results: List[Dict[str, Any]] = []
@@ -327,7 +359,11 @@ def analyze_batch(payload: dict = Body(...)):
             results.append({"row": index, "title": "", "ok": False, "error": "行数据格式不正确"})
             continue
         try:
-            data = _norm_payload(dict(raw))
+            row = dict(raw)
+            # 行内没写类目就用批次级默认值（前端下拉选的），再没有就交给自动识别
+            if not str(row.get("category") or "").strip():
+                row["category"] = default_category
+            data = _norm_payload(row)
             rep = analyze(data)
             report_id = f"td-{uuid.uuid4().hex[:12]}"
             _save(
@@ -358,6 +394,7 @@ def analyze_batch(payload: dict = Body(...)):
                     "blocked_by": gates.get("blocked_by") or [],
                     "high": counts.get("high") or 0,
                     "issues": counts.get("issues") or 0,
+                    "category": (rep.get("category") or {}).get("key"),
                     "top_issues": [i.get("id") for i in (rep.get("issues") or [])[:3]],
                 }
             )

@@ -51,6 +51,15 @@ const ENGINE_CODES = [
   "compliance.absolute",
   "compliance.efficacy",
   "compliance.guarantee",
+  // 类目专属（2026-11-12）：词库按类目切换，码随类目一起加
+  "compliance.food.efficacy",
+  "compliance.food.cert",
+  "compliance.beauty.drug",
+  "compliance.beauty.whiten",
+  "compliance.beauty.function",
+  "compliance.baby.claim",
+  "compliance.medical.claim",
+  "compliance.medical.cert",
 ];
 
 /**
@@ -83,6 +92,14 @@ const ENGINE_PARAMS: Record<string, string[]> = {
   "compliance.absolute": ["word", "count"],
   "compliance.efficacy": ["word", "count"],
   "compliance.guarantee": ["word", "count"],
+  "compliance.food.efficacy": ["word", "count"],
+  "compliance.food.cert": ["word", "count"],
+  "compliance.beauty.drug": ["word", "count"],
+  "compliance.beauty.whiten": ["word", "count"],
+  "compliance.beauty.function": ["word", "count"],
+  "compliance.baby.claim": ["word", "count"],
+  "compliance.medical.claim": ["word", "count"],
+  "compliance.medical.cert": ["word", "count"],
 };
 
 /** 词条存在且真的翻译了（不是把中文原样塞回去）。 */

@@ -928,6 +928,48 @@ const EN: Record<string, string> = {
   "请粘贴 CSV 或上传文件": "Paste CSV content or upload a file first",
   "只支持 .csv 文件": "Only .csv files are supported",
   文件读取失败: "Could not read the file",
+
+  // ── 类目合规词库（2026-11-12）────────────────────────────────────────────
+  "类目（决定用哪套合规词库）": "Category (selects the compliance word list)",
+  自动识别: "Auto-detect",
+  "食品 / 保健": "Food & supplements",
+  "美妆 / 护肤": "Beauty & skincare",
+  "母婴 / 玩具": "Baby & toys",
+  "器械 / 消毒": "Devices & disinfectants",
+  "自动识别为「{name}」类目": "Auto-detected category: {name}",
+  "按「{name}」类目校验": "Checked against {name} rules",
+  "默认类目（CSV 里没有「类目」列时用它）":
+    "Default category (used when the CSV has no category column)",
+
+  "「{word}」是食品功效宣称，普通食品不能这么说":
+    "“{word}” is a health claim — ordinary food cannot say this",
+  "普通食品只能讲配料、口感、吃法。要讲功效必须有保健食品批号并按批准范围写，否则删掉，换成「配料表只有 3 项」这类事实。":
+    "Plain food may only describe ingredients, taste and how to eat it. Health claims require a registered health-food number and must match its approved wording. Otherwise delete the claim and state a verifiable fact, e.g. “only 3 ingredients”.",
+  "「{word}」是需要资质背书的宣称": "“{word}” requires certification to back it up",
+  "有机要有有机认证证书号，纯天然/零添加都需检测依据（零添加 2027 年起也禁止标注）。改成可核验的事实，例如「配料表：核桃仁、腰果」。":
+    "Organic needs a certificate number; “pure natural” and “zero additives” need test evidence (from 2027 “zero additives” labelling is banned outright). Replace with verifiable facts, e.g. “Ingredients: walnuts, cashews”.",
+  "「{word}」在化妆品上属禁用表述": "“{word}” is a prohibited claim on cosmetics",
+  "化妆品不得出现药妆、医用、械字号、医生推荐等医疗暗示。改成成分与肤感描述：「敏感肌可用」→「含神经酰胺，质地清爽」。":
+    "Cosmetics may not imply medical use — no “cosmeceutical”, “medical grade”, “device-registered” or “doctor-recommended”. Describe ingredients and texture instead: “sensitive-skin friendly” → “contains ceramides, light texture”.",
+  "「{word}」属特殊化妆品功效，必须有注册证号":
+    "“{word}” is a special-cosmetic claim and needs a registration number",
+  "美白祛斑要按特殊化妆品注册，页面须标「国妆特字」编号。没有证就删掉，改成「提亮肤色、改善暗沉」并只描述使用感受。":
+    "Whitening and spot removal require special-cosmetic registration, and the page must show the special-cosmetic registration number. Without it, drop the claim and describe the experience only.",
+  "「{word}」是需要功效评价备案的宣称":
+    "“{word}” requires an efficacy assessment filing",
+  "抗皱、祛痘、缩毛孔、防脱等 2021 年起须提交功效评价报告。没做评价就删掉，只写成分、质地、适用肤质。":
+    "Anti-wrinkle, anti-acne, pore-minimising and anti-hair-loss claims have needed an efficacy report since 2021. Without one, stick to ingredients, texture and skin type.",
+  "「{word}」在母婴 / 玩具类属违规宣称":
+    "“{word}” is an illegal claim for baby and toy products",
+  "玩具不能宣称益智、可食用、食品级、无毒无害；婴幼儿食品不能宣称提高智力。改成可验证参数：适用年龄、材质、3C 证书编号。":
+    "Toys may not claim to boost intelligence, be edible, food-grade or completely non-toxic; infant food may not claim to raise IQ. Replace with verifiable specs: age range, material, 3C certificate number.",
+  "「{word}」是医疗器械才允许的表述":
+    "“{word}” is reserved for registered medical devices",
+  "非医疗器械不得讲治疗、康复、替代药物。删掉疗效表述，只写适用范围、测量精度、使用方法。":
+    "Non-medical products may not claim treatment, recovery or replacing medication. Delete the therapeutic wording and describe scope, accuracy and usage only.",
+  "「{word}」需要相应备案或许可": "“{word}” requires a filing or licence",
+  "消毒、抑菌、灭菌要有卫生安全评价报告与消字号编号。普通清洁用品改成「清洁」「除污」，不要碰杀菌类的词。":
+    "Disinfect, antibacterial and sterilise claims need a hygiene safety assessment and a hygiene licence number. Ordinary cleaners should say “cleans” or “removes stains” instead.",
 };
 
 export type Locale = "zh-CN" | "en-US";
