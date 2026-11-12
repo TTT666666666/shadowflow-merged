@@ -25,6 +25,8 @@ import { sfFetch } from "./shared";
 import { TeardownBatch } from "./TeardownBatch";
 import {
   CATEGORY_OPTIONS,
+  CONTACT_KIND_LABEL,
+  PLATFORM_OPTIONS,
   DIM_LABEL,
   DIM_ORDER,
   GRADE_LABEL,
@@ -34,6 +36,8 @@ import {
   SEVERITY_LABEL,
   SLOT_LABEL,
   categoryLabel,
+  platformLabel,
+  platformLimits,
   type IssueDim,
   type IssueSeverity,
 } from "../teardown-copy";
@@ -71,6 +75,7 @@ interface Report {
   version: number;
   engine: string;
   category?: { key: string | null; label: string | null; detected: boolean };
+  platform?: { key: string; label: string; title_max: number; points_max: number; bullet_max: number | null };
   score: { total: number; grade: string; dimensions: DimScore[] };
   gates: { can_list: boolean; blocked_by: string[]; score_cap: number | null };
   issues: IssueItem[];
@@ -124,6 +129,7 @@ export function TeardownView({ onGoBiz }: { onGoBiz?: () => void }) {
   const [detail, setDetail] = useState("");
   const [price, setPrice] = useState("");
   const [category, setCategory] = useState("auto");
+  const [platform, setPlatform] = useState("generic");
   const [flags, setFlags] = useState<Record<string, boolean>>({});
 
   const [busy, setBusy] = useState(false);
@@ -176,6 +182,7 @@ export function TeardownView({ onGoBiz }: { onGoBiz?: () => void }) {
         detail: detail.trim(),
         price_cents: price.trim() === "" ? null : Math.round(Number(price) * 100),
         category,
+        platform,
         flags,
       };
       const res = await sfFetch<{ report_id: string; report: Report }>(
@@ -337,6 +344,25 @@ export function TeardownView({ onGoBiz }: { onGoBiz?: () => void }) {
           </label>
         </div>
 
+        <label className="sf-doctor-field">
+          <span>{t("目标平台（决定跑哪套平台规则）")}</span>
+          <select value={platform} onChange={(e) => setPlatform(e.target.value)}>
+            {PLATFORM_OPTIONS.map((opt) => (
+              <option key={opt.key} value={opt.key}>
+                {t(opt.label)}
+              </option>
+            ))}
+          </select>
+          {platform !== "generic" && (
+            <em className="sf-doctor-hint">
+              {tn("标题上限 {max} 字符 · 卖点最多 {n} 条", {
+                max: platformLimits(platform).titleMax,
+                n: platformLimits(platform).pointsMax,
+              })}
+            </em>
+          )}
+        </label>
+
         <div className="sf-doctor-flags">
           <p>{t("已有素材（勾了就按有算）")}</p>
           <div>
@@ -444,6 +470,13 @@ export function TeardownView({ onGoBiz }: { onGoBiz?: () => void }) {
                         })}
                   </span>
                 )}
+                {report.platform && report.platform.key !== "generic" && (
+                  <span className="sf-doctor-cat">
+                    {tn("按「{name}」平台规则校验", {
+                      name: t(platformLabel(report.platform.key)),
+                    })}
+                  </span>
+                )}
                 {report.gates.score_cap != null && (
                   <p className="sf-doctor-cap">
                     {tn("命中合规红线，总分封顶 {cap} 分", { cap: report.gates.score_cap })}
@@ -483,6 +516,16 @@ export function TeardownView({ onGoBiz }: { onGoBiz?: () => void }) {
               )}
               {report.issues.map((issue, index) => {
                 const copy = ISSUE_COPY[issue.id];
+                // 后端只回 kind=email/url/phone，渲染前换成当前语言的说法
+                const params =
+                  issue.id === "platform.contact"
+                    ? {
+                        ...issue.params,
+                        kind: t(
+                          CONTACT_KIND_LABEL[String(issue.params.kind)] ?? CONTACT_KIND_LABEL.email,
+                        ),
+                      }
+                    : issue.params;
                 return (
                   <article key={`${issue.id}-${index}`} className={`sf-doctor-issue lv-${issue.severity}`}>
                     <header>
@@ -490,7 +533,7 @@ export function TeardownView({ onGoBiz }: { onGoBiz?: () => void }) {
                       <span className="dim">{t(DIM_LABEL[issue.dim])}</span>
                       <span className={`sev ${issue.severity}`}>{t(SEVERITY_LABEL[issue.severity])}</span>
                     </header>
-                    <strong>{copy ? tn(copy.title, issue.params) : issue.id}</strong>
+                    <strong>{copy ? tn(copy.title, params) : issue.id}</strong>
                     {copy && <p>{t(copy.fix)}</p>}
                     {issue.evidence && (
                       <blockquote>

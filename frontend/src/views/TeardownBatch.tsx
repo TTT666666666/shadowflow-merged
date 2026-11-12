@@ -27,6 +27,7 @@ import {
   BATCH_TEMPLATE_CSV,
   CATEGORY_OPTIONS,
   GRADE_LABEL,
+  PLATFORM_OPTIONS,
 } from "../teardown-copy";
 
 interface BatchItem {
@@ -98,6 +99,7 @@ export function TeardownBatch({ onOpenReport }: { onOpenReport?: (id: string) =>
   const [label, setLabel] = useState("");
   const [brand, setBrand] = useState("");
   const [category, setCategory] = useState("auto");
+  const [platform, setPlatform] = useState("generic");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [result, setResult] = useState<BatchRecord | null>(null);
@@ -141,6 +143,7 @@ export function TeardownBatch({ onOpenReport }: { onOpenReport?: (id: string) =>
           label: label.trim(),
           brand: brand.trim(),
           category,
+          platform,
         }),
       });
       if (!mounted.current) return;
@@ -263,16 +266,28 @@ export function TeardownBatch({ onOpenReport }: { onOpenReport?: (id: string) =>
           </label>
         </div>
 
-        <label className="sf-doctor-field">
-          <span>{t("默认类目（CSV 里没有「类目」列时用它）")}</span>
-          <select value={category} onChange={(e) => setCategory(e.target.value)}>
-            {CATEGORY_OPTIONS.map((opt) => (
-              <option key={opt.key} value={opt.key}>
-                {t(opt.label)}
-              </option>
-            ))}
-          </select>
-        </label>
+        <div className="sf-batch-meta">
+          <label className="sf-doctor-field">
+            <span>{t("默认类目（CSV 里没有「类目」列时用它）")}</span>
+            <select value={category} onChange={(e) => setCategory(e.target.value)}>
+              {CATEGORY_OPTIONS.map((opt) => (
+                <option key={opt.key} value={opt.key}>
+                  {t(opt.label)}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="sf-doctor-field">
+            <span>{t("目标平台（CSV 里没有「平台」列时用它）")}</span>
+            <select value={platform} onChange={(e) => setPlatform(e.target.value)}>
+              {PLATFORM_OPTIONS.map((opt) => (
+                <option key={opt.key} value={opt.key}>
+                  {t(opt.label)}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
 
         {error && (
           <p className="sf-doctor-error" role="alert">

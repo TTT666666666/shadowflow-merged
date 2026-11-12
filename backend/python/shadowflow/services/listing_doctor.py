@@ -110,6 +110,66 @@ SCENE_WORDS = (
     "女生", "男生", "婴儿", "宠物",
 )
 
+# 英文同义元素（跨境 listing 用）。
+#
+# 只补**正向识别**用的词：材质、证据、售后、发货、锚点、赠品、CTA、规格、利益点。
+# 这些检查问的是「有没有写」，词表只覆盖中文时，一份完全合格的英文 listing 会被
+# 判成「材质没写、售后没写、没 CTA」，报告立刻失去可信度——这是实测出来的坑，
+# 不是理论风险。
+#
+# 不补极限词/功效词：那两类对应《广告法》口径，英文侧由平台规则
+# （platform.promo / platform.claim）负责，两套混起来会重复扣分。
+_EN_ELEMENT_WORDS: Dict[str, tuple] = {
+    "benefit": (
+        "keeps", "helps", "easy", "comfortable", "durable", "safe", "lightweight",
+        "waterproof", "leak proof", "bpa free", "fits", "cleans", "soft", "warm",
+        "quiet", "long lasting", "machine washable", "anti-slip", "non-slip",
+        "breathable", "keeps you", "without", "save", "reusable",
+    ),
+    "material": (
+        "material", "fabric", "stainless", "steel", "cotton", "wool", "linen",
+        "leather", "ceramic", "glass", "bamboo", "silicone", "polyester",
+        "aluminum", "aluminium", "resin", "wood", "handmade", "hand-woven",
+        "crafted", "abs ", "tpu", "nylon",
+    ),
+    "proof": (
+        "tested", "certified", "certification", "certificate", "lab ", "report",
+        "patent", "review", "rating", "rated", "sold", "verified", "award",
+        "ce ", "rohs", "fcc", "iso ", "warranty", "guarantee",
+    ),
+    "after_sale": (
+        "return", "refund", "exchange", "warranty", "replacement",
+        "customer service", "satisfaction", "money back", "repair",
+    ),
+    "shipping": (
+        "shipping", "delivery", "deliver", "ships", "dispatch", "in stock",
+        "prime", "tracking", "arrives", "ship within",
+    ),
+    "anchor": (
+        "original price", "list price", "compare at", "value pack", "bundle",
+        "pack of", "set of", "save ", "off)", "was $", "per unit",
+    ),
+    "bundle": ("free gift", "bonus", "includes", "with purchase", "pack of", "set of"),
+    "cta": (
+        "add to cart", "buy now", "order now", "shop now", "get yours",
+        "subscribe", "click", "choose", "select your", "available now",
+    ),
+    "options": (
+        "size", "color", "colour", "capacity", "pack of", "options",
+        "available in", "variant", "oz", "ml", "inch", "cm",
+    ),
+}
+
+BENEFIT_MARKERS = BENEFIT_MARKERS + _EN_ELEMENT_WORDS["benefit"]
+MATERIAL_WORDS = MATERIAL_WORDS + _EN_ELEMENT_WORDS["material"]
+PROOF_WORDS = PROOF_WORDS + _EN_ELEMENT_WORDS["proof"]
+AFTER_SALE_WORDS = AFTER_SALE_WORDS + _EN_ELEMENT_WORDS["after_sale"]
+SHIPPING_WORDS = SHIPPING_WORDS + _EN_ELEMENT_WORDS["shipping"]
+ANCHOR_WORDS = ANCHOR_WORDS + _EN_ELEMENT_WORDS["anchor"]
+BUNDLE_WORDS = BUNDLE_WORDS + _EN_ELEMENT_WORDS["bundle"]
+CTA_WORDS = CTA_WORDS + _EN_ELEMENT_WORDS["cta"]
+OPTION_WORDS = OPTION_WORDS + _EN_ELEMENT_WORDS["options"]
+
 # --------------------------------------------------------------------------- 类目词库
 #
 # 通用极限词抓不住类目特有的雷区：「降血糖」在玩具详情页只是句废话，在食品页
@@ -231,6 +291,64 @@ def detect_category(text: str) -> Optional[str]:
         if hits > best_hits:
             best, best_hits = cat, hits
     return best
+
+
+# --------------------------------------------------------------------------- 平台规则
+#
+# 同一份文案，在国内电商「不够好」，在亚马逊可能「直接被抑制」——这是两件不同的事。
+# 跨境卖家（P1 客群）愿意为这条付费，因为他们踩过：标题写 «Best Seller»、五点写了
+# 联系方式、标题堆 emoji，后台直接 Search Suppressed，人工申诉要等 3–7 天。
+#
+# 判定同样是纯字符串规则，零模型成本；平台差异全部收敛在 PLATFORM_LIMITS 一处，
+# 加新平台只加一条配置，不改打分逻辑。
+
+PLATFORM_LABELS: Dict[str, str] = {
+    "generic": "通用（国内电商）",
+    "amazon": "亚马逊 Amazon",
+    "tiktok": "TikTok Shop",
+}
+
+# 平台硬限制。generic 用原来的国内口径，保持历史报告可复现。
+PLATFORM_LIMITS: Dict[str, Dict[str, Any]] = {
+    "generic": {"title_max": TITLE_MAX, "points_max": POINTS_MAX, "bullet_max": None},
+    "amazon": {"title_max": 200, "points_max": 5, "bullet_max": 500},
+    "tiktok": {"title_max": 255, "points_max": POINTS_MAX, "bullet_max": None},
+}
+
+# 平台明令禁止出现在 listing 里的促销语言（带这些词会被抑制，不是「不够吸引人」）
+PROMO_WORDS = (
+    "best seller", "bestseller", "best-selling", "free shipping", "free gift",
+    "on sale", "discount", "money back", "satisfaction guaranteed",
+    "hot item", "limited time offer", "buy now", "cheapest", "top rated",
+    "100% satisfaction", "greatest", "best ever", "no.1", "#1",
+)
+
+# 需要授权才能说的功效/背书：没资质就是违规，写了要下架
+PLATFORM_CLAIM_WORDS = (
+    "fda", "ce certified", "approved by", "clinically proven", "doctor recommended",
+    "cure", "treats", "prevents disease", "anti-bacterial", "antibacterial",
+    "sterilize", "organic certified",
+)
+
+_EMAIL_RE = re.compile(r"[\w.+-]+@[\w-]+\.[\w.]{2,}")
+_URL_RE = re.compile(r"(?:https?://|www\.)\S+", re.IGNORECASE)
+_PHONE_RE = re.compile(r"(?<!\d)1[3-9]\d{9}(?!\d)")
+_CAPS_RE = re.compile(r"[A-Z]{5,}")
+_AMAZON_SYMBOL_RE = re.compile(r"[!$?_~^{}|<>]")
+_EMOJI_RE = re.compile(r"[\U0001F300-\U0001FAFF\u2600-\u27BF]")
+
+
+def _hit_phrase(text: str, phrases: Sequence[str]) -> Optional[str]:
+    """英文短语按词边界匹配：``sale`` 不该命中 ``wholesale``；中文照旧走子串。"""
+    lowered = (text or "").lower()
+    for phrase in phrases:
+        needle = phrase.lower()
+        if needle.isascii() and needle.replace(" ", "").isalnum():
+            if re.search(rf"(?<![a-z0-9]){re.escape(needle)}(?![a-z0-9])", lowered):
+                return phrase
+        elif needle in lowered:
+            return phrase
+    return None
 
 _NUM_TOKEN_RE = re.compile(
     r"\d+(?:\.\d+)?\s*(?:cm|mm|m|kg|g|ml|l|寸|英寸|天|日|小时|分钟|年|件|只|个|片|套|色|w|v|mah)",
@@ -398,7 +516,9 @@ def _check_pricing(payload: Mapping[str, Any], text: str) -> List[Dict[str, Any]
     return issues
 
 
-def _check_conversion(payload: Mapping[str, Any], text: str) -> List[Dict[str, Any]]:
+def _check_conversion(
+    payload: Mapping[str, Any], text: str, platform: str = "generic"
+) -> List[Dict[str, Any]]:
     issues: List[Dict[str, Any]] = []
     has_cta = _present(payload, "cta", text, CTA_WORDS)
     if not has_cta:
@@ -407,7 +527,9 @@ def _check_conversion(payload: Mapping[str, Any], text: str) -> List[Dict[str, A
             issues.append(_issue("cta.vague", "conversion", "medium", vague, word=vague))
         else:
             issues.append(_issue("cta.missing", "conversion", "high"))
-    if not _present(payload, "contact", text, CONTACT_WORDS):
+    # 跨境平台禁止站外导流：这里再要求「补联系方式」就会和平台规则互相打脸，
+    # 用户看到两张矛盾的卡，会直接不信这份报告。
+    if platform == "generic" and not _present(payload, "contact", text, CONTACT_WORDS):
         issues.append(_issue("cta.no_contact", "conversion", "medium"))
     if _hit(text, OPTION_WORDS) is None:
         issues.append(_issue("cta.no_options", "conversion", "low"))
@@ -446,7 +568,105 @@ def _check_compliance(text: str, category: Optional[str] = None) -> List[Dict[st
     return issues
 
 
-# --------------------------------------------------------------------------- 评分
+def _check_platform(
+    platform: str, title: str, points: Sequence[str], text: str
+) -> List[Dict[str, Any]]:
+    """按目标平台的硬性规则校验；``generic`` 不跑任何平台规则。
+
+    严重度取舍：标题/卖点结构类只扣分不拦（平台会截断或建议修改）；
+    促销语言与联系方式属于政策违规（会被抑制/下架），记 high 进合规门禁。
+    """
+    limits = PLATFORM_LIMITS.get(platform)
+    if platform == "generic" or not limits:
+        return []
+
+    issues: List[Dict[str, Any]] = []
+    label = PLATFORM_LABELS.get(platform, platform)
+    extra = {"platform": platform, "platform_label": label}
+
+    # ── 标题 ────────────────────────────────────────────────────────────────
+    compact = _compact(title)
+    length = len(compact)
+    title_max = int(limits["title_max"])
+    if length > title_max:
+        issues.append(
+            _issue(
+                "platform.title.too_long", "title", "medium", title,
+                length=length, max=title_max, **extra,
+            )
+        )
+
+    emoji = _EMOJI_RE.findall(title)
+    if emoji:
+        issues.append(
+            _issue(
+                "platform.title.emoji", "title", "medium", emoji[0],
+                count=len(emoji), **extra,
+            )
+        )
+
+    if platform == "amazon":
+        caps = _CAPS_RE.findall(title)
+        if caps:
+            issues.append(
+                _issue("platform.title.caps", "title", "medium", caps[0], word=caps[0], **extra)
+            )
+        symbols = _AMAZON_SYMBOL_RE.findall(title)
+        if symbols:
+            issues.append(
+                _issue(
+                    "platform.title.symbols", "title", "low", title,
+                    chars=" ".join(dict.fromkeys(symbols)), count=len(symbols), **extra,
+                )
+            )
+
+    # ── 卖点（五点描述）─────────────────────────────────────────────────────
+    points_max = int(limits["points_max"])
+    if len(points) > points_max:
+        issues.append(
+            _issue("platform.bullets.too_many", "points", "medium", "",
+                   count=len(points), max=points_max, **extra)
+        )
+
+    bullet_max = limits.get("bullet_max")
+    if bullet_max:
+        for index, point in enumerate(points, start=1):
+            if len(point) > int(bullet_max):
+                issues.append(
+                    _issue(
+                        "platform.bullets.too_long", "points", "low", point,
+                        row=index, length=len(point), max=int(bullet_max), **extra,
+                    )
+                )
+                break  # 一条就够提示，不必逐条刷屏
+
+    # ── 政策违规（进合规门禁）───────────────────────────────────────────────
+    promo = _hit_phrase(text, PROMO_WORDS)
+    if promo:
+        issues.append(
+            _issue("platform.promo", "compliance", "medium", promo, word=promo, **extra)
+        )
+
+    claim = _hit_phrase(text, PLATFORM_CLAIM_WORDS)
+    if claim:
+        issues.append(
+            _issue("platform.claim", "compliance", "high", claim, word=claim, **extra)
+        )
+
+    contact = None
+    for kind, regex in (("email", _EMAIL_RE), ("url", _URL_RE), ("phone", _PHONE_RE)):
+        found = regex.search(text)
+        if found:
+            contact = (kind, found.group(0))
+            break
+    if contact:
+        kind, hit = contact
+        issues.append(
+            _issue("platform.contact", "compliance", "high", hit, kind=kind, **extra)
+        )
+
+    return issues
+
 
 
 def _score_dim(issues: Sequence[Mapping[str, Any]]) -> int:
@@ -559,13 +779,18 @@ def analyze(payload: Mapping[str, Any], enhance: Optional[Any] = None) -> Dict[s
     else:
         category, category_detected = None, False
 
+    platform = str(payload.get("platform") or "generic").strip().lower()
+    if platform not in PLATFORM_LIMITS:
+        platform = "generic"
+
     issues: List[Dict[str, Any]] = []
     issues += _check_title(title)
     issues += _check_points(points)
     issues += _check_trust(payload, text)
     issues += _check_pricing(payload, text)
-    issues += _check_conversion(payload, text)
+    issues += _check_conversion(payload, text, platform)
     issues += _check_compliance(text, category)
+    issues += _check_platform(platform, title, points, text)
 
     by_dim = {dim: [i for i in issues if i["dim"] == dim] for dim in DIM_ORDER}
     dim_scores = {dim: _score_dim(by_dim[dim]) for dim in DIM_ORDER}
@@ -587,6 +812,13 @@ def analyze(payload: Mapping[str, Any], enhance: Optional[Any] = None) -> Dict[s
             "key": category,
             "label": CATEGORY_LABELS.get(category) if category else None,
             "detected": bool(category_detected and category),
+        },
+        "platform": {
+            "key": platform,
+            "label": PLATFORM_LABELS[platform],
+            "title_max": PLATFORM_LIMITS[platform]["title_max"],
+            "points_max": PLATFORM_LIMITS[platform]["points_max"],
+            "bullet_max": PLATFORM_LIMITS[platform]["bullet_max"],
         },
         "score": {
             "total": total,

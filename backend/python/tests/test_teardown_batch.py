@@ -132,7 +132,7 @@ def test_bad_row_is_recorded_but_other_rows_survive(reports_dir):
         json={
             "items": [
                 GOOD,
-                {"title": "x" * 300, "points": []},  # 标题超长 → 422
+                {"title": "x" * 400, "points": []},  # 标题超长 → 422
                 {"title": "", "points": []},  # 空 → 422
             ]
         },
@@ -201,7 +201,7 @@ def test_export_en_header_is_english(reports_dir):
     text = client.get(
         f"/api/teardown/batches/{created['batch_id']}/export?format=csv&lang=en"
     ).content.decode("utf-8-sig")
-    assert text.splitlines()[0].startswith("Row,Title,Score")
+    assert text.splitlines()[0].startswith("Row,Title,Platform,Score")
     assert "商品标题" not in text
 
 

@@ -17,7 +17,9 @@ import {
   ISSUE_COPY,
   NEED_LABEL,
   SEVERITY_LABEL,
+  PLATFORM_OPTIONS,
   SLOT_LABEL,
+  platformLimits,
 } from "./teardown-copy";
 
 const HAN = /[\u4e00-\u9fa5]/;
@@ -60,6 +62,16 @@ const ENGINE_CODES = [
   "compliance.baby.claim",
   "compliance.medical.claim",
   "compliance.medical.cert",
+  // 平台规则（2026-11-12）：跨境平台硬限制与政策违规，码随平台一起加
+  "platform.title.too_long",
+  "platform.title.emoji",
+  "platform.title.caps",
+  "platform.title.symbols",
+  "platform.bullets.too_many",
+  "platform.bullets.too_long",
+  "platform.promo",
+  "platform.claim",
+  "platform.contact",
 ];
 
 /**
@@ -100,6 +112,15 @@ const ENGINE_PARAMS: Record<string, string[]> = {
   "compliance.baby.claim": ["word", "count"],
   "compliance.medical.claim": ["word", "count"],
   "compliance.medical.cert": ["word", "count"],
+  "platform.title.too_long": ["length", "max"],
+  "platform.title.emoji": ["count"],
+  "platform.title.caps": ["word"],
+  "platform.title.symbols": ["chars", "count"],
+  "platform.bullets.too_many": ["count", "max"],
+  "platform.bullets.too_long": ["row", "length", "max"],
+  "platform.promo": ["word"],
+  "platform.claim": ["word"],
+  "platform.contact": ["kind"],
 };
 
 /** 词条存在且真的翻译了（不是把中文原样塞回去）。 */
@@ -148,5 +169,30 @@ describe("商品诊断文案表", () => {
         expect(allowed.has(name), `${code} 的改法用了后端不会传的 {${name}}`).toBe(true);
       }
     }
+  });
+});
+
+/**
+ * 平台下拉的自检：选项文案要有英文，限制值要跟后端一致。
+ * 限制值写错不会崩，只会让用户在界面上看到错误的「标题上限」——最难发现的那种错。
+ */
+describe("平台选项", () => {
+  it("每个平台标签都有英文词条", () => {
+    for (const opt of PLATFORM_OPTIONS) {
+      const en = EN_DICTIONARY[opt.label];
+      expect(en, `${opt.label} 缺英文`).toBeTruthy();
+      expect(HAN.test(String(en))).toBe(false);
+    }
+  });
+
+  it("限制值与后端 PLATFORM_LIMITS 对齐（亚马逊 200 字符 / 5 条卖点）", () => {
+    expect(platformLimits("generic").titleMax).toBe(60);
+    expect(platformLimits("amazon").titleMax).toBe(200);
+    expect(platformLimits("amazon").pointsMax).toBe(5);
+    expect(platformLimits("tiktok").titleMax).toBe(255);
+  });
+
+  it("未知平台回落到通用，不抛错", () => {
+    expect(platformLimits("alibaba").key).toBe("generic");
   });
 });

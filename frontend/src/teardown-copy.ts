@@ -74,6 +74,38 @@ export function categoryLabel(key?: string | null): string {
   return CATEGORY_OPTIONS.find((o) => o.key === key)?.label ?? key;
 }
 
+/**
+ * 目标平台：key 与后端 `platform` 一一对应。
+ * 「通用」= 国内电商口径，也是默认值——不选平台就不跑平台规则，老报告不会变味。
+ */
+export const PLATFORM_OPTIONS: {
+  key: string;
+  label: string;
+  /** 以下三项必须与后端 `PLATFORM_LIMITS` 一致（teardown-copy.test.ts 有断言）。 */
+  titleMax: number;
+  pointsMax: number;
+}[] = [
+  { key: "generic", label: "通用（国内电商）", titleMax: 60, pointsMax: 8 },
+  { key: "amazon", label: "亚马逊 Amazon", titleMax: 200, pointsMax: 5 },
+  { key: "tiktok", label: "TikTok Shop", titleMax: 255, pointsMax: 8 },
+];
+
+export function platformLimits(key: string) {
+  return PLATFORM_OPTIONS.find((o) => o.key === key) ?? PLATFORM_OPTIONS[0];
+}
+
+export function platformLabel(key?: string | null): string {
+  if (!key) return "";
+  return PLATFORM_OPTIONS.find((o) => o.key === key)?.label ?? key;
+}
+
+/** 联系方式类型（后端 `platform.contact` 的 `kind`）。 */
+export const CONTACT_KIND_LABEL: Record<string, string> = {
+  email: "邮箱",
+  url: "链接",
+  phone: "电话",
+};
+
 /** 标题骨架缺哪一段（后端 `titles[].missing`）。 */
 export const SLOT_LABEL: Record<string, string> = {
   name: "品名",
@@ -234,6 +266,44 @@ export const ISSUE_COPY: Record<string, IssueCopy> = {
   "compliance.medical.cert": {
     title: "「{word}」需要相应备案或许可",
     fix: "消毒、抑菌、灭菌要有卫生安全评价报告与消字号编号。普通清洁用品改成「清洁」「除污」，不要碰杀菌类的词。",
+  },
+
+  // ── 平台规则（亚马逊 / TikTok Shop）──────────────────────────────────────
+  "platform.title.too_long": {
+    title: "标题 {length} 字符，超出该平台上限 {max}",
+    fix: "平台会截断或直接抑制搜索。把最不重要的修饰词删到卖点里，标题只留品名 + 核心规格。",
+  },
+  "platform.title.emoji": {
+    title: "标题里有 {count} 个 emoji",
+    fix: "跨境平台不认 emoji：既进不了搜索，部分站点还判违规。删掉，换成能被搜到的实词。",
+  },
+  "platform.title.caps": {
+    title: "「{word}」写成了全大写",
+    fix: "改成首字母大写（如 Stainless Steel）。亚马逊把全大写视为滥用关键词，会降权。",
+  },
+  "platform.title.symbols": {
+    title: "标题含平台禁用符号：{chars}",
+    fix: "亚马逊不允许 ! $ ? _ ~ ^ { } | < > 这类符号。删掉，用空格分隔词组。",
+  },
+  "platform.bullets.too_many": {
+    title: "写了 {count} 条卖点，该平台只收 {max} 条",
+    fix: "把最弱的几条合并或删掉。五点描述只展示前 5 条，第 6 条开始买家看不到。",
+  },
+  "platform.bullets.too_long": {
+    title: "第 {row} 条卖点 {length} 字符，超过 {max}",
+    fix: "长句拆成「短句 + 数字」。移动端只显示前两行，后半句等于没写。",
+  },
+  "platform.promo": {
+    title: "出现平台禁止的促销语言「{word}」",
+    fix: "listing 里不能写促销词，平台会抑制搜索。优惠放到 coupon 或活动里，别写进标题和卖点。",
+  },
+  "platform.claim": {
+    title: "出现需授权的宣称「{word}」",
+    fix: "没拿到对应认证就不能写。删掉，或把证书编号写进详情页并走平台审核。",
+  },
+  "platform.contact": {
+    title: "详情里有{kind}，跨境平台禁止站外导流",
+    fix: "买家绕过平台成交会被判违规。删掉联系方式，用平台站内信沟通。",
   },
 };
 

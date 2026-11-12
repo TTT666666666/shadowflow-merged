@@ -7658,3 +7658,13 @@ html[data-sf-motion="reduce"] *::after {
   .sf-batch-meta { grid-template-columns: 1fr; }
   .sf-batch-table td.title { min-width: 160px; }
 }
+
+/* 平台下拉下方的限制提示：数字要能一眼看到，所以做成等宽感的小字 */
+.sf-doctor-hint {
+  display: block;
+  margin-top: 5px;
+  font-size: 10.5px;
+  font-style: normal;
+  color: #8c8375;
+  letter-spacing: 0.2px;
+}

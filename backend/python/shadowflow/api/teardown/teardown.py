@@ -31,7 +31,10 @@ _DEFAULT_REPORTS_DIR = ".shadowflow/teardown"
 def _reports_dir() -> Path:
     return Path(os.getenv(_REPORTS_DIR_ENV) or _DEFAULT_REPORTS_DIR)
 
-MAX_TITLE = 200
+# 上限要高于最宽松的平台限制（TikTok 255 / 亚马逊单条卖点 500），
+# 否则超长文案会被 422 直接拒收——而「标题超长」恰恰是该被诊断出来的问题。
+MAX_TITLE = 300
+MAX_POINT = 700
 MAX_FIELD = 8000
 MAX_CSV = 200_000
 # 一次批次最多 50 条：规则引擎是纯函数、单条毫秒级，但落盘与响应体要可控。
@@ -46,6 +49,7 @@ _CSV_ALIASES = {
     "price": "price", "价格": "price", "价格(元)": "price", "价格（元）": "price",
     "flags": "flags", "素材": "flags", "已有素材": "flags",
     "category": "category", "类目": "category", "品类": "category", "行业": "category",
+    "platform": "platform", "平台": "platform", "目标平台": "platform", "站点": "platform",
 }
 
 # 类目值别名：CSV 里人写的是「食品」「母婴」，引擎要的是 key。
@@ -58,6 +62,16 @@ _CATEGORY_ALIASES = {
     "baby": "baby", "母婴": "baby", "玩具": "baby", "儿童": "baby", "童装": "baby",
     "medical": "medical", "医疗": "medical", "器械": "medical", "消毒": "medical",
     "医疗器械": "medical", "个护器械": "medical",
+}
+
+# 平台值别名：跨境卖家写的是「亚马逊」「amazon.com」「TikTok」，引擎要的是 key。
+_PLATFORM_ALIASES = {
+    "": "generic", "generic": "generic", "通用": "generic", "国内": "generic",
+    "国内电商": "generic", "淘宝": "generic", "天猫": "generic", "抖店": "generic",
+    "拼多多": "generic", "小红书": "generic", "京东": "generic",
+    "amazon": "amazon", "亚马逊": "amazon", "amazon.com": "amazon", "亚马逊美国站": "amazon",
+    "tiktok": "tiktok", "tiktok shop": "tiktok", "tik tok": "tiktok", "抖音小店": "tiktok",
+    "跨境": "amazon",
 }
 
 
@@ -80,7 +94,7 @@ def _norm_payload(raw: Mapping[str, Any]) -> Dict[str, Any]:
 
     points_raw = raw.get("points")
     if isinstance(points_raw, (list, tuple)):
-        points = [_clean_field(p, 400) for p in points_raw if str(p or "").strip()][:20]
+        points = [_clean_field(p, MAX_POINT) for p in points_raw if str(p or "").strip()][:20]
     else:
         points = _clean_field(points_raw)
 
@@ -109,6 +123,9 @@ def _norm_payload(raw: Mapping[str, Any]) -> Dict[str, Any]:
     category_raw = str(raw.get("category") or "").strip().lower()
     category = _CATEGORY_ALIASES.get(category_raw, "auto")
 
+    platform_raw = str(raw.get("platform") or "").strip().lower()
+    platform = _PLATFORM_ALIASES.get(platform_raw, "generic")
+
     return {
         "title": title,
         "points": points,
@@ -117,6 +134,7 @@ def _norm_payload(raw: Mapping[str, Any]) -> Dict[str, Any]:
         "price_cents": price_cents,
         "flags": flags,
         "category": category,
+        "platform": platform,
     }
 
 
@@ -191,6 +209,8 @@ def _parse_csv(text: str) -> List[Dict[str, Any]]:
             row["flags"] = {f: True for f in flag_keys}
         if cells.get("category"):
             row["category"] = cells["category"]  # 行内类目优先于批次级默认值
+        if cells.get("platform"):
+            row["platform"] = cells["platform"]  # 行内平台同理
         rows.append(row)
     return rows
 
@@ -319,6 +339,17 @@ def list_rules():
             }
             for key, label in engine.CATEGORY_LABELS.items()
         ],
+        # 平台差异对外可见：界面上的「按亚马逊规则」不是文案噱头，限制值直接来自这里
+        "platforms": [
+            {
+                "key": key,
+                "label": label,
+                "title_max": engine.PLATFORM_LIMITS[key]["title_max"],
+                "points_max": engine.PLATFORM_LIMITS[key]["points_max"],
+                "bullet_max": engine.PLATFORM_LIMITS[key]["bullet_max"],
+            }
+            for key, label in engine.PLATFORM_LABELS.items()
+        ],
     }
 
 
@@ -350,6 +381,7 @@ def analyze_batch(payload: dict = Body(...)):
     label = _clean_field(payload.get("label"), 120)
     brand = _clean_field(payload.get("brand"), 120)
     default_category = payload.get("category") or "auto"
+    default_platform = payload.get("platform") or "generic"
     batch_id = f"tb-{uuid.uuid4().hex[:12]}"
     created_at = _now()
     results: List[Dict[str, Any]] = []
@@ -363,6 +395,8 @@ def analyze_batch(payload: dict = Body(...)):
             # 行内没写类目就用批次级默认值（前端下拉选的），再没有就交给自动识别
             if not str(row.get("category") or "").strip():
                 row["category"] = default_category
+            if not str(row.get("platform") or "").strip():
+                row["platform"] = default_platform
             data = _norm_payload(row)
             rep = analyze(data)
             report_id = f"td-{uuid.uuid4().hex[:12]}"
@@ -395,6 +429,7 @@ def analyze_batch(payload: dict = Body(...)):
                     "high": counts.get("high") or 0,
                     "issues": counts.get("issues") or 0,
                     "category": (rep.get("category") or {}).get("key"),
+                    "platform": (rep.get("platform") or {}).get("key"),
                     "top_issues": [i.get("id") for i in (rep.get("issues") or [])[:3]],
                 }
             )
@@ -469,9 +504,9 @@ def export_batch(
 
     zh = lang == "zh"
     header = (
-        ["序号", "商品标题", "总分", "等级", "能否上架", "致命问题", "问题数", "主要问题", "报告编号"]
+        ["序号", "商品标题", "平台", "总分", "等级", "能否上架", "致命问题", "问题数", "主要问题", "报告编号"]
         if zh
-        else ["Row", "Title", "Score", "Grade", "Can list", "Critical", "Issues", "Top issues", "Report ID"]
+        else ["Row", "Title", "Platform", "Score", "Grade", "Can list", "Critical", "Issues", "Top issues", "Report ID"]
     )
     buf = io.StringIO()
     writer = csv.writer(buf)
@@ -482,13 +517,14 @@ def export_batch(
     for item in record.get("items") or []:
         if not item.get("ok"):
             writer.writerow(
-                [item.get("row"), item.get("title"), "", "", "", "", "", item.get("error") or "", ""]
+                [item.get("row"), item.get("title"), item.get("platform") or "", "", "", "", "", "", item.get("error") or "", ""]
             )
             continue
         writer.writerow(
             [
                 item.get("row"),
                 item.get("title"),
+                item.get("platform") or "",
                 item.get("total") if item.get("total") is not None else "",
                 item.get("grade") or "",
                 ("是" if zh else "Yes") if item.get("can_list") else ("否" if zh else "No"),
